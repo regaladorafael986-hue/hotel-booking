@@ -34,7 +34,7 @@ function formHtml(d) {
 
       <div class="card"><div class="card-head"><h2>Promo code</h2></div><div class="card-body">
         <div class="field"><label for="cc" class="sr-only">Promo code</label>
-          <div class="input-group"><input id="cc" class="input" name="coupon_code" maxlength="40" placeholder="e.g. WELCOME10" value="${esc(d.coupon_code || '')}" style="text-transform:uppercase"><button class="btn btn-outline" type="button" id="apply-coupon">Apply</button></div>
+          <div class="input-group"><input id="cc" class="input" name="coupon_code" maxlength="40" placeholder="Enter promo code" value="${esc(d.coupon_code || '')}" style="text-transform:uppercase"><button class="btn btn-outline" type="button" id="apply-coupon">Apply</button></div>
           <div class="field-error"></div><div class="hint" id="coupon-msg"></div>
         </div>
       </div></div>

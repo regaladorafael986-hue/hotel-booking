@@ -82,7 +82,7 @@ function render(b) {
       message: b.cancel_needs_review ? `Your request for <strong>${esc(b.booking_reference)}</strong> will be reviewed by the hotel. Your rooms stay reserved until it is approved.` : `Booking <strong>${esc(b.booking_reference)}</strong> will be cancelled immediately and the rooms released.`,
       confirmText: b.cancel_needs_review ? 'Send request' : 'Cancel booking',
       danger: true,
-      input: { label: 'Reason for cancelling', required: true, min: 3, multiline: true, placeholder: 'e.g. Change of travel plans' },
+      input: { label: 'Reason for cancelling', required: true, min: 3, multiline: true, placeholder: 'Tell us why you are cancelling' },
     });
     if (!reason) return;
     try {

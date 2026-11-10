@@ -81,11 +81,11 @@ function getProvider(key) {
   return p;
 }
 
-/** Providers for the login/register UI. Unconfigured ones are listed (disabled) only outside production. */
+/** Providers for the login/register UI — only those with API keys configured. */
 function listProviders() {
   return Object.entries(PROVIDERS)
     .map(([id, p]) => ({ id, name: p.name, enabled: p.configured() }))
-    .filter((p) => p.enabled || !env.isProd);
+    .filter((p) => p.enabled);
 }
 
 /** Begin sign-in: remember state (+ PKCE verifier) in the session and return the provider URL. */

@@ -36,10 +36,11 @@ async function renderSocial({ withEmailButton }) {
   try { ({ items: providers } = await api.get('/auth/providers')); } catch { /* email sign-in still works */ }
   const next = p.next && p.next.startsWith('/') && !p.next.startsWith('//') ? `&next=${encodeURIComponent(p.next)}` : '';
   const verb = page === 'register' ? 'Sign up' : 'Continue';
-  const buttons = providers.map((pr) => (pr.enabled
-    ? `<a class="btn btn-social ${pr.id}" href="/api/v1/auth/oauth/${pr.id}/start?mode=login${next}">${BRAND[pr.id] || ''}${verb} with ${esc(pr.name)}</a>`
-    : `<span class="btn btn-social ${pr.id}" aria-disabled="true" title="${esc(pr.name)} sign-in needs API keys — see README (Social sign-in)">${BRAND[pr.id] || ''}${verb} with ${esc(pr.name)}<span class="setup">Setup required</span></span>`)).join('');
-  if (withEmailButton) {
+  const buttons = providers.filter((pr) => pr.enabled)
+    .map((pr) => `<a class="btn btn-social ${pr.id}" href="/api/v1/auth/oauth/${pr.id}/start?mode=login${next}">${BRAND[pr.id] || ''}${verb} with ${esc(pr.name)}</a>`).join('');
+  if (withEmailButton && !buttons) {
+    form.classList.remove('hidden');
+  } else if (withEmailButton) {
     box.innerHTML = `<div class="social-stack">${buttons}<button type="button" class="btn btn-social" id="email-choice">${icon('mail')}${verb} with email</button></div>`;
     const reveal = () => {
       form.classList.remove('hidden');
@@ -81,7 +82,6 @@ async function main() {
       if (p.oauth_error) notice.innerHTML = alertBox('danger', esc(p.oauth_error));
       if (p.reason === 'booking') notice.innerHTML = alertBox('info', 'Please log in or create an account to complete your booking.');
       if (p.reset === '1') notice.innerHTML = alertBox('success', 'Your password has been updated. Log in with your new password.');
-      $('#demo').toggleAttribute('hidden', !['localhost', '127.0.0.1'].includes(location.hostname));
       document.querySelector('.switch a').href = `/register.html${p.next ? `?next=${encodeURIComponent(p.next)}` : ''}`;
       submit(async (v) => {
         const r = await api.post('/auth/login', { email: v.email, password: v.password });

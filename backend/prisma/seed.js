@@ -59,7 +59,6 @@ async function main() {
       description: 'StayEase is an independent boutique hotel offering 25 thoughtfully designed rooms and suites, a rooftop infinity pool, an all-day dining room and a quiet spa — a calm base whether you are in town for business or a long weekend away.',
       address: '88 Harbor View Drive, Pasay City, Metro Manila, Philippines',
       contactNumber: '+63 2 8123 4567',
-      email: 'reservations@stayease.example',
       checkInTime: '14:00',
       checkOutTime: '12:00',
       freeCancellationHours: 48,
@@ -69,8 +68,6 @@ async function main() {
       payAtHotelAutoConfirm: true,
       holdMinutes: 15,
       mapEmbedUrl: 'https://www.google.com/maps?q=Pasay+City+Metro+Manila&output=embed',
-      facebookUrl: 'https://facebook.com/',
-      instagramUrl: 'https://instagram.com/',
     },
   });
   await prisma.hotelImage.createMany({

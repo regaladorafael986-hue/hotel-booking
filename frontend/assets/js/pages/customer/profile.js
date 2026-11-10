@@ -75,12 +75,12 @@ async function renderMethods() {
   try { ({ items: providers } = await api.get('/auth/providers')); } catch { /* list still shows email */ }
   const linked = new Map((user.linked_providers || []).map((l) => [l.provider, l]));
   const emailRow = `<li><div><strong>Email &amp; password</strong><div class="small muted">${esc(user.email)}</div></div>${hasPw ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-muted">No password set</span>'}</li>`;
-  const rows = providers.map((p) => {
+  const rows = providers.filter((p) => p.enabled || linked.has(p.id)).map((p) => {
     const l = linked.get(p.id);
     let action;
     if (l) action = `<button class="btn btn-outline btn-sm" data-unlink="${p.id}">Disconnect</button>`;
     else if (p.enabled) action = `<a class="btn btn-sm" href="/api/v1/auth/oauth/${p.id}/start?mode=link">Connect</a>`;
-    else action = '<span class="badge badge-muted plain" title="Needs API keys — see README">Setup required</span>';
+    else action = '';
     const status = l ? `Connected${l.email ? ` as ${esc(l.email)}` : ''} · ${dateTime(l.connected_at)}` : 'Not connected';
     return `<li><div><strong>${esc(p.name)}</strong><div class="small muted">${status}</div></div>${action}</li>`;
   });

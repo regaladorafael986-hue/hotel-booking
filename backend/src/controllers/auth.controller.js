@@ -1,6 +1,5 @@
 const auth = require('../services/auth.service');
 const { ensureCsrfToken } = require('../middleware/csrf');
-const env = require('../config/env');
 const oauth = require('../services/oauth.service');
 const AppError = require('../utils/AppError');
 
@@ -32,7 +31,7 @@ module.exports = {
     res.status(201).json({
       user: auth.toPublicUser(user),
       csrf_token: csrf,
-      message: env.brevo.apiKey ? 'Account created. Check your inbox to verify your email.' : 'Account created. (Development mode: the verification link was printed in the server console.)',
+      message: 'Account created. Check your inbox to verify your email address.',
     });
   },
 
