@@ -291,3 +291,16 @@ body.site { background: var(--white); }
   .nav-actions { gap: 6px; }
   .hero-content { padding: 110px 0 120px; }
 }
+
+/* ---------- Social sign-in ---------- */
+.social-stack { display: grid; gap: 10px; }
+.btn-social { --bg: #fff; --fg: var(--charcoal); --bd: var(--gray-300); width: 100%; min-height: 48px; justify-content: center; font-weight: 600; position: relative; }
+.btn-social:hover { --bg: #f8f8f6; --bd: #b9bcc2; --fg: var(--charcoal); }
+.btn-social svg { width: 20px; height: 20px; flex: none; }
+.btn-social.facebook { --bg: #1877F2; --fg: #fff; --bd: #1877F2; }
+.btn-social.facebook:hover { --bg: #166fe0; --bd: #166fe0; --fg: #fff; }
+.btn-social[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
+.btn-social .setup { position: absolute; right: 12px; font-size: .68rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; opacity: .8; }
+.or-divider { display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: .8rem; margin: 22px 0; }
+.or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: var(--gray); }
+@media (max-width: 420px) { .btn-social .setup { display: none; } }

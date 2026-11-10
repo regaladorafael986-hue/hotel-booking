@@ -9,7 +9,7 @@ npm test
 
 The suite uses Node's built-in test runner and supertest against the real Express app and a **separate MySQL database, `stayease_test`**. It is created and migrated automatically; override it with `TEST_DATABASE_URL`. The suite never touches `stayease_db`.
 
-**Last run: 18 tests, 18 passed, 0 failed.**
+**Last run: 28 tests, 28 passed, 0 failed** (`api.test.js` 18, `oauth.test.js` 10).
 
 | Area | What is verified |
 |---|---|
@@ -26,6 +26,7 @@ The suite uses Node's built-in test runner and supertest against the real Expres
 | Front desk | Check-in; check-out blocked with `BALANCE_DUE`; over-collection rejected; payment recorded; check-out marks rooms DIRTY; receipt PDF; review only after stay; duplicate review blocked |
 | Room assignment | Reassigning to a room taken for overlapping dates → 409 |
 | Cancellation | Unpaid → instant; paid → request → admin approval with refund → CANCELLED + REFUNDED; over-refund rejected |
+| Social sign-in | Provider calls stubbed: state + PKCE on start; forged and replayed `state` rejected; new Google user created verified and logged in with no password; repeat sign-in reuses the account; password login refused for social-only accounts, which can set a password; the only sign-in method can't be disconnected; existing account linked only on a Google-verified email (Facebook refused); new Facebook user gets a verification email; staff refused; missing email refused; link from profile; `?next` open redirect ignored |
 | Reports | Dashboard figures from live data; all 8 reports return rows; PDF and XLSX exports are valid files; audit log records actions |
 
 ## Browser end-to-end checks (performed during development)
@@ -52,6 +53,7 @@ These were run in headless Chrome against the seeded database.
 - [ ] Keyboard-only navigation of the booking flow; screen-reader labels on forms.
 
 ## Known limitations
+- Google and Facebook sign-in are tested with stubbed provider responses; run one real sign-in with each after adding keys.
 - PayMongo, Brevo and Cloudinary integrations follow their published REST APIs but have **not** been exercised with live credentials in this environment.
 - Room rates are a single base price per category (no seasonal or weekend pricing).
 - Background jobs run in-process; with multiple app instances, enable `RUN_JOBS` on only one of them.

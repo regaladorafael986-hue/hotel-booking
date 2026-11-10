@@ -53,13 +53,17 @@ Receptionist permission keys are `check_in`, `check_out`, `assign_room`, `collec
 | POST `/auth/register` | public | `first_name, last_name, email, phone?, password, confirm_password?` → logs in, sends verification email |
 | POST `/auth/login` | public | `email, password` → `{ user, csrf_token }` (session id regenerated) |
 | POST `/auth/logout` | public | destroys the session |
-| GET `/auth/me` | public | `{ user }` or `{ user: null }` |
+| GET `/auth/me` | public | `{ user }` (with `has_password` and `linked_providers`) or `{ user: null }` |
 | POST `/auth/verify-email` | public | `token` |
 | POST `/auth/resend-verification` | auth | |
 | POST `/auth/forgot-password` | public | `email` (same response whether or not the account exists) |
 | POST `/auth/reset-password` | public | `token, password` (single-use token, 1 h; signs out all sessions) |
 | PUT `/auth/profile` | auth | `first_name?, last_name?, phone?` |
-| PUT `/auth/password` | auth | `current_password, new_password` (signs out other sessions) |
+| PUT `/auth/password` | auth | `current_password, new_password`. `current_password` is not needed if the account has no password yet (social sign-up). Signs out other sessions |
+| GET `/auth/providers` | public | `[{ id: google \| facebook, name, enabled }]`. Unconfigured providers are only listed outside production |
+| GET `/auth/oauth/:provider/start?next=/path&mode=login\|link` | public (`link`: auth) | 302 to Google/Facebook. Stores a single-use `state` (and a PKCE verifier for Google) in the session |
+| GET `/auth/oauth/:provider/callback` | provider | Checks `state`, exchanges the code server-side, then signs in, signs up or links the account and redirects. Errors redirect to `/login.html?oauth_error=…` |
+| DELETE `/auth/oauth/:provider` | auth | Disconnect a provider (refused if it is the only way to sign in) |
 
 ## Hotel & rooms (public)
 | Method & path | Notes |

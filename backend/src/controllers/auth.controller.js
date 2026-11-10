@@ -1,6 +1,11 @@
 const auth = require('../services/auth.service');
 const { ensureCsrfToken } = require('../middleware/csrf');
 const env = require('../config/env');
+const oauth = require('../services/oauth.service');
+const AppError = require('../utils/AppError');
+
+/** Only same-site relative paths are allowed as post-login destinations (no open redirects). */
+const safeNext = (n) => (typeof n === 'string' && /^\/(?!\/)[^\s\\]*$/.test(n) && !n.includes('://') && !n.startsWith('/api/') ? n : null);
 
 /** Regenerate the session id on privilege change (prevents session fixation) and keep a fresh CSRF token. */
 function startSession(req, user) {
@@ -45,8 +50,46 @@ module.exports = {
     });
   },
 
-  me(req, res) {
-    res.json({ user: req.user ? auth.toPublicUser(req.user) : null });
+  async me(req, res) {
+    if (!req.user) return res.json({ user: null });
+    res.json({ user: { ...auth.toPublicUser(req.user), linked_providers: await oauth.linkedProviders(req.user.id) } });
+  },
+
+  // ───── Social sign-in (Google / Facebook) ─────
+  providers(req, res) {
+    res.json({ items: oauth.listProviders() });
+  },
+
+  /** GET /auth/oauth/:provider/start?next=/path&mode=link → 302 to the provider. Errors come back to the login page. */
+  oauthStart(req, res) {
+    const mode = req.query.mode === 'link' ? 'link' : 'login';
+    try {
+      if (mode === 'link' && !req.user) throw new Error('Please log in to connect an account.');
+      const url = oauth.start(req, req.params.provider, { next: safeNext(req.query.next), mode });
+      req.session.save(() => res.redirect(302, url));
+    } catch (err) {
+      res.redirect(302, `${mode === 'link' ? '/customer/profile.html' : '/login.html'}?oauth_error=${encodeURIComponent(err.message)}`);
+    }
+  },
+
+  /** GET /auth/oauth/:provider/callback — provider redirects here with ?code&state. */
+  async oauthCallback(req, res) {
+    const linking = req.session?.oauth?.mode === 'link';
+    try {
+      const r = await oauth.callback(req, req.params.provider, { code: req.query.code, state: req.query.state, error: req.query.error });
+      if (r.linked) return res.redirect(302, `/customer/profile.html?linked=${encodeURIComponent(req.params.provider)}`);
+      await startSession(req, r.user);
+      res.redirect(302, r.next || (r.user.emailVerifiedAt ? '/customer/dashboard.html' : '/customer/dashboard.html?welcome=1'));
+    } catch (err) {
+      if (!(err instanceof AppError)) console.error('[oauth] callback failed', err);
+      const msg = err instanceof AppError ? err.message : 'Sign-in failed. Please try again.';
+      req.session.save(() => res.redirect(302, `${linking ? '/customer/profile.html' : '/login.html'}?oauth_error=${encodeURIComponent(msg)}`));
+    }
+  },
+
+  async oauthUnlink(req, res) {
+    await oauth.unlink(req, req.params.provider);
+    res.json({ message: 'Account disconnected.' });
   },
 
   async verifyEmail(req, res) {

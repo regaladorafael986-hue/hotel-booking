@@ -24,6 +24,10 @@ const env = {
     apiSecret: process.env.CLOUDINARY_API_SECRET || '',
     folder: process.env.CLOUDINARY_FOLDER || 'stayease',
   },
+  oauth: {
+    google: { clientId: process.env.GOOGLE_CLIENT_ID || '', clientSecret: process.env.GOOGLE_CLIENT_SECRET || '' },
+    facebook: { clientId: process.env.FACEBOOK_APP_ID || '', clientSecret: process.env.FACEBOOK_APP_SECRET || '', graphVersion: process.env.FACEBOOK_GRAPH_VERSION || 'v19.0' },
+  },
   payments: {
     provider: (process.env.PAYMENT_PROVIDER || 'mock').toLowerCase(),
     mockWebhookSecret: process.env.MOCK_WEBHOOK_SECRET || 'dev-mock-webhook-secret',

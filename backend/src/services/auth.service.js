@@ -27,6 +27,7 @@ function toPublicUser(u) {
     role: u.role,
     account_status: u.accountStatus,
     email_verified: Boolean(u.emailVerifiedAt),
+    has_password: Boolean(u.passwordHash),
     permissions: u.role === 'RECEPTIONIST' ? (Array.isArray(u.permissions) ? u.permissions : DEFAULT_STAFF_PERMISSIONS) : u.role === 'ADMIN' ? DEFAULT_STAFF_PERMISSIONS : [],
     created_at: u.createdAt,
   };
@@ -67,7 +68,8 @@ async function register(req, data) {
 
 async function login(req, { email: emailAddr, password }) {
   const user = await prisma.user.findUnique({ where: { email: emailAddr.toLowerCase() } });
-  const ok = await bcrypt.compare(password, user ? user.passwordHash : DUMMY_HASH);
+  // Social-login-only accounts have no password: compare against a dummy hash so they fail the same way (and take the same time).
+  const ok = await bcrypt.compare(password, user?.passwordHash || DUMMY_HASH) && Boolean(user?.passwordHash);
   if (!user || !ok) {
     await audit.log(req, 'LOGIN_FAILED', { entityType: 'user', description: `Failed login for ${emailAddr.toLowerCase()}` });
     throw AppError.unauthorized('Incorrect email or password.');
@@ -113,8 +115,11 @@ async function updateProfile(user, data) {
 }
 
 async function changePassword(req, { current_password, new_password }) {
-  const ok = await bcrypt.compare(current_password, req.user.passwordHash);
-  if (!ok) throw AppError.badRequest('Your current password is incorrect.', { fields: { current_password: 'Incorrect password.' } });
+  // Accounts created with Google/Facebook have no password yet: they may set one without a current password.
+  if (req.user.passwordHash) {
+    const ok = await bcrypt.compare(current_password || '', req.user.passwordHash);
+    if (!ok) throw AppError.badRequest('Your current password is incorrect.', { fields: { current_password: 'Incorrect password.' } });
+  }
   await prisma.user.update({ where: { id: req.user.id }, data: { passwordHash: await hashPassword(new_password) } });
   await store.destroyUserSessions(req.user.id, req.sessionID);
   await audit.log(req, 'PASSWORD_CHANGED', { entityType: 'user', entityId: req.user.id });

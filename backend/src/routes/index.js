@@ -31,7 +31,11 @@ r.get('/auth/csrf', auth.csrf);
 r.post('/auth/register', authLimiter, validate({ body: A.register }), auth.register);
 r.post('/auth/login', authLimiter, validate({ body: A.login }), auth.login);
 r.post('/auth/logout', auth.logout);
-r.get('/auth/me', auth.me); // 200 with { user: null } for guests (avoids console noise on public pages)
+r.get('/auth/me', auth.me);
+r.get('/auth/providers', auth.providers);
+r.get('/auth/oauth/:provider/start', authLimiter, auth.oauthStart);
+r.get('/auth/oauth/:provider/callback', authLimiter, auth.oauthCallback);
+r.delete('/auth/oauth/:provider', requireAuth, auth.oauthUnlink); // 200 with { user: null } for guests (avoids console noise on public pages)
 r.post('/auth/verify-email', authLimiter, validate({ body: A.verify }), auth.verifyEmail);
 r.post('/auth/resend-verification', requireAuth, emailLimiter, auth.resendVerification);
 r.post('/auth/forgot-password', emailLimiter, validate({ body: A.forgot }), auth.forgotPassword);

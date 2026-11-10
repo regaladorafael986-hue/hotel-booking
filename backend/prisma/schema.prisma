@@ -105,7 +105,7 @@ model User {
   lastName        String        @map("last_name") @db.VarChar(80)
   email           String        @unique @db.VarChar(191)
   phone           String?       @db.VarChar(30)
-  passwordHash    String        @map("password_hash") @db.VarChar(255)
+  passwordHash    String?       @map("password_hash") @db.VarChar(255) // null for social-login-only accounts
   role            Role          @default(CUSTOMER)
   accountStatus   AccountStatus @default(ACTIVE) @map("account_status")
   permissions     Json? // receptionist permission keys, e.g. ["check_in","collect_payment"]
@@ -120,12 +120,30 @@ model User {
   notifications   Notification[]
   auditLogs       AuditLog[]
   tokens          AuthToken[]
+  oauthAccounts   OAuthAccount[]
   paymentsRecorded Payment[]     @relation("PaymentRecordedBy")
 
   @@index([role])
   @@index([accountStatus])
   @@index([lastName, firstName])
   @@map("users")
+}
+
+// External sign-in identities (Google, Facebook) linked to a StayEase user.
+model OAuthAccount {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @map("user_id")
+  provider       String   @db.VarChar(20) // google | facebook
+  providerUserId String   @map("provider_user_id") @db.VarChar(191)
+  email          String?  @db.VarChar(191)
+  createdAt      DateTime @default(now()) @map("created_at")
+  lastUsedAt     DateTime @default(now()) @map("last_used_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@unique([userId, provider])
+  @@map("oauth_accounts")
 }
 
 model AuthToken {

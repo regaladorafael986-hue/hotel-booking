@@ -16,7 +16,7 @@ StayEase is a web-based booking and operations platform for **one hotel**. Guest
 
 ## Features
 
-**Guests / customers**: homepage with live search, featured rooms, offers and reviews · room listing with date availability and filters (price, category, bed, capacity, amenities) · room details with gallery, availability calendar and policies · registration, login, email verification, password reset · 4-step booking with server-priced quote and promo codes · online payment or pay at hotel · confirmation and PDF receipts · dashboard, booking history, cancellation (instant if unpaid, reviewed if paid), reviews, notifications, profile and password.
+**Guests / customers**: sign up or log in with **Google, Facebook or email** · homepage with live search, featured rooms, offers and reviews · room listing with date availability and filters (price, category, bed, capacity, amenities) · room details with gallery, availability calendar and policies · registration, login, email verification, password reset · 4-step booking with server-priced quote and promo codes · online payment or pay at hotel · confirmation and PDF receipts · dashboard, booking history, cancellation (instant if unpaid, reviewed if paid), reviews, notifications, profile and password.
 
 **Receptionists**: front-desk dashboard · booking-reference verification · arrivals and departures with one-click check-in/out · room assignment and reassignment · payment collection (cash/card/GCash/Maya/bank) · walk-in reservations · housekeeping board · permission-based access.
 
@@ -93,6 +93,19 @@ All settings live in `backend/.env` (see `backend/.env.example`). Secrets never 
 | `PAYMONGO_SECRET_KEY`, `PAYMONGO_WEBHOOK_SECRET`, `PAYMONGO_LIVE_MODE` | PayMongo Checkout + webhook signature verification |
 | `TRUST_PROXY` | Set `true` behind a reverse proxy so secure cookies and client IPs work |
 | `RUN_JOBS` | Enables the hold-expiry and reminder jobs (run them on one instance only) |
+
+### Enabling social sign-in (Google / Facebook)
+The register and login pages offer **Continue with Google**, **Continue with Facebook** and **Continue with email**. Until keys are set, the social buttons show *Setup required* in development and are hidden in production.
+
+1. **Google**: in Google Cloud Console, go to APIs & Services → Credentials → *Create OAuth client ID* (Web application). Add the authorized redirect URI `{APP_URL}/api/v1/auth/oauth/google/callback`, then set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+2. **Facebook**: in Meta for Developers, create an app and add *Facebook Login*. Add the valid OAuth redirect URI `{APP_URL}/api/v1/auth/oauth/facebook/callback` (HTTPS in production) and request the `email` permission. Then set `FACEBOOK_APP_ID` and `FACEBOOK_APP_SECRET`.
+3. Restart the server.
+
+How accounts are matched:
+- A new social user becomes a customer account with no password. Google emails count as verified. Facebook accounts receive a verification email.
+- An existing account is linked automatically **only** when Google confirms the email is verified. Otherwise the guest logs in with their password and clicks **Connect** under *Profile → Sign-in methods*.
+- Staff and admin accounts always use email and password.
+- Social-only users can add a password from their profile, or through *Forgot password*.
 
 ### Enabling PayMongo (GCash, Maya, cards)
 1. Create a PayMongo account and copy the **secret key** (test mode first).
