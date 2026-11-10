@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contact — StayEase</title>
+  <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <script type="module" src="/assets/js/pages/static.js"></script>
+</head>
+<body data-page="contact">
+  <a class="sr-only" href="#main">Skip to content</a>
+  <header id="site-header"></header>
+  <main id="main">
+    <section class="page-banner">
+      <div class="bg" style="background-image:url('https://images.unsplash.com/photo-1600011689032-8b628b8a8747?auto=format&fit=crop&w=2000&q=70')"></div>
+      <div class="container"><div class="breadcrumbs"><a href="/index.html">Home</a> / Contact</div><h1>Contact &amp; location</h1><p>Questions about a booking, events or special requests? We're happy to help.</p></div>
+    </section>
+    <section class="section">
+      <div class="container split" style="align-items:start">
+        <div>
+          <span class="eyebrow">Get in touch</span>
+          <h2>Send us a message</h2>
+          <form id="contact-form" class="form-grid mt-3" novalidate>
+            <div class="field"><label for="c-name">Full name</label><input id="c-name" class="input" name="name" required minlength="2" maxlength="120" autocomplete="name"><div class="field-error"></div></div>
+            <div class="field"><label for="c-email">Email</label><input id="c-email" class="input" type="email" name="email" required maxlength="191" autocomplete="email"><div class="field-error"></div></div>
+            <div class="field"><label for="c-phone">Phone <span class="muted">(optional)</span></label><input id="c-phone" class="input" type="tel" name="phone" maxlength="30" autocomplete="tel"><div class="field-error"></div></div>
+            <div class="field"><label for="c-subject">Subject</label><select id="c-subject" class="select" name="subject" required><option value="">Choose a topic…</option><option>Existing reservation</option><option>New reservation enquiry</option><option>Events &amp; group stays</option><option>Feedback</option><option>Other</option></select><div class="field-error"></div></div>
+            <div class="field span-2"><label for="c-msg">Message</label><textarea id="c-msg" class="textarea" name="message" required minlength="10" maxlength="4000" placeholder="How can we help?"></textarea><div class="field-error"></div></div>
+            <div class="span-2"><button class="btn btn-lg" type="submit">Send message</button></div>
+          </form>
+        </div>
+        <div class="stack" style="--stack:24px">
+          <div class="contact-list" id="contact-list"></div>
+          <iframe class="map-frame" id="map" title="Hotel location map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer id="site-footer"></footer>
+</body>
+</html>

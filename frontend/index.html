@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StayEase Hotel &amp; Suites — Book your stay</title>
+  <meta name="description" content="Boutique city hotel with 25 rooms and suites, rooftop pool, spa and all-day dining. Book direct for the best rates.">
+  <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <script type="module" src="/assets/js/pages/home.js"></script>
+</head>
+<body>
+  <a class="sr-only" href="#main">Skip to content</a>
+  <header id="site-header"></header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="hero-media" id="hero-media"></div>
+      <div class="container">
+        <div class="hero-content">
+          <span class="eyebrow" id="hero-eyebrow">Boutique hotel · Metro Manila</span>
+          <h1 id="hero-title">Unhurried stays in the heart of the city</h1>
+          <p id="hero-text">Thoughtfully designed rooms, a rooftop infinity pool and warm, attentive service. Book direct for our best available rates.</p>
+          <div class="hero-actions">
+            <a class="btn btn-gold btn-lg" href="#search">Check availability</a>
+            <a class="btn btn-light btn-lg" href="/rooms.html">Explore rooms</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="search-wrap" id="search">
+      <div class="container" id="search-slot"></div>
+    </div>
+
+    <section class="section">
+      <div class="container split">
+        <div class="img-stack reveal">
+          <div class="img-frame"><img id="intro-img" src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1000&q=80" alt="Guest room with garden view" loading="lazy" data-fallback></div>
+          <div class="img-frame small"><img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=600&q=80" alt="Fine dining at the hotel restaurant" loading="lazy" data-fallback></div>
+        </div>
+        <div class="reveal">
+          <span class="eyebrow">Welcome</span>
+          <h2 id="intro-title">A calm base for the city</h2>
+          <p class="lead" id="intro-text">StayEase is an independent boutique hotel offering thoughtfully designed rooms and suites, a rooftop infinity pool, an all-day dining room and a quiet spa.</p>
+          <div class="stat-row" id="intro-stats">
+            <div><div class="num">—</div><div class="lbl">Rooms &amp; suites</div></div>
+            <div><div class="num">—</div><div class="lbl">Guest rating</div></div>
+            <div><div class="num">24/7</div><div class="lbl">Front desk</div></div>
+          </div>
+          <a class="btn btn-outline mt-3" href="/about.html">Discover the hotel</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-cream">
+      <div class="container">
+        <div class="section-head">
+          <div><span class="eyebrow">Stay with us</span><h2>Rooms &amp; suites</h2></div>
+          <p class="lead">From efficient city rooms to panoramic corner suites — every stay includes fast Wi-Fi, premium bedding and access to the pool and fitness studio.</p>
+        </div>
+        <div class="room-grid" id="featured-rooms"></div>
+        <div class="center mt-4"><a class="btn btn-lg" href="/rooms.html">View all rooms</a></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-head center" style="justify-content:center"><div><span class="eyebrow">Facilities</span><h2 style="max-width:none">Everything you need, nothing you don't</h2></div></div>
+        <div class="grid grid-4" id="facilities"></div>
+      </div>
+    </section>
+
+    <section class="section section-navy" id="offers">
+      <div class="container">
+        <div class="section-head">
+          <div><span class="eyebrow">Special offers</span><h2>Book direct &amp; save</h2></div>
+          <p class="lead" style="color:rgba(255,255,255,.75)">Apply a promo code at checkout. Codes are validated live, so you'll see your saving before you confirm.</p>
+        </div>
+        <div class="grid grid-3" id="offer-list"></div>
+      </div>
+    </section>
+
+    <section class="section section-cream">
+      <div class="container">
+        <div class="section-head">
+          <div><span class="eyebrow">Guest reviews</span><h2>What our guests say</h2></div>
+          <div class="rating-summary" id="rating-summary"></div>
+        </div>
+        <div class="grid grid-3" id="review-list"></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container split">
+        <div class="reveal">
+          <span class="eyebrow">Location</span>
+          <h2>Find us</h2>
+          <p class="lead">Minutes from the bay, the business district and the airport.</p>
+          <div class="contact-list mt-3" id="contact-list"></div>
+          <a class="btn btn-outline mt-3" href="/contact.html">Contact the hotel</a>
+        </div>
+        <div class="reveal"><iframe class="map-frame" id="map" title="Hotel location map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+</body>
+</html>

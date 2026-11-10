@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rooms &amp; Suites — StayEase</title>
+  <meta name="description" content="Browse rooms and suites, check live availability for your dates and book direct.">
+  <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <script type="module" src="/assets/js/pages/rooms.js"></script>
+</head>
+<body>
+  <a class="sr-only" href="#main">Skip to content</a>
+  <header id="site-header"></header>
+  <main id="main">
+    <section class="page-banner">
+      <div class="bg" style="background-image:url('https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=2000&q=70')"></div>
+      <div class="container">
+        <div class="breadcrumbs"><a href="/index.html">Home</a> / Rooms</div>
+        <h1>Rooms &amp; suites</h1>
+        <p>Choose your dates to see live availability and the total for your stay.</p>
+      </div>
+    </section>
+    <div class="search-inline"><div class="container" id="search-slot"></div></div>
+
+    <section class="section" style="padding-top:40px">
+      <div class="container listing">
+        <aside class="filters" id="filters" aria-label="Filters">
+          <form id="filter-form" novalidate>
+            <div class="group">
+              <h3>Price per night</h3>
+              <div class="grid grid-2" style="gap:10px">
+                <div class="field"><label for="f-min" class="sr-only">Minimum</label><input id="f-min" class="input" type="number" name="min_price" min="0" step="100" placeholder="Min ₱"></div>
+                <div class="field"><label for="f-max" class="sr-only">Maximum</label><input id="f-max" class="input" type="number" name="max_price" min="0" step="100" placeholder="Max ₱"></div>
+              </div>
+              <div class="field-error" id="price-error"></div>
+            </div>
+            <div class="group">
+              <h3>Room category</h3>
+              <select class="select" name="room_type_id" id="f-type" aria-label="Room category"><option value="">All categories</option></select>
+            </div>
+            <div class="group">
+              <h3>Bed type</h3>
+              <select class="select" name="bed_type" id="f-bed" aria-label="Bed type"><option value="">Any bed</option></select>
+            </div>
+            <div class="group">
+              <h3>Guests per room</h3>
+              <select class="select" name="capacity" aria-label="Minimum guest capacity"><option value="">Any</option><option value="2">2+ guests</option><option value="3">3+ guests</option><option value="4">4+ guests</option><option value="6">6+ guests</option></select>
+            </div>
+            <div class="group">
+              <h3>Amenities</h3>
+              <div class="chips" id="f-amenities"></div>
+            </div>
+            <div class="group row">
+              <button class="btn btn-block" type="submit">Apply filters</button>
+              <button class="btn btn-ghost btn-block" type="reset">Clear all</button>
+            </div>
+          </form>
+        </aside>
+        <div>
+          <div class="result-bar">
+            <div><strong id="result-count">Rooms</strong><div class="small muted" id="result-sub"></div></div>
+            <div class="row">
+              <button class="btn btn-outline filter-toggle" id="filter-toggle" aria-controls="filters" aria-expanded="false">Filters</button>
+              <label class="sr-only" for="sort">Sort</label>
+              <select class="select" id="sort" style="width:auto"><option value="price_asc">Price: low to high</option><option value="price_desc">Price: high to low</option><option value="capacity">Most guests</option></select>
+            </div>
+          </div>
+          <div class="room-list" id="room-list"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer id="site-footer"></footer>
+</body>
+</html>

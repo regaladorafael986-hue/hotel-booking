@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hotel policies — StayEase</title>
+  <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <script type="module" src="/assets/js/pages/static.js"></script>
+</head>
+<body data-page="policies">
+  <a class="sr-only" href="#main">Skip to content</a>
+  <header id="site-header"></header>
+  <main id="main">
+    <section class="page-banner"><div class="container"><div class="breadcrumbs"><a href="/index.html">Home</a> / Policies</div><h1>Hotel policies</h1><p>Please review these before your stay.</p></div></section>
+    <section class="section" style="padding-top:48px">
+      <div class="container" style="max-width:820px">
+        <div class="stack" style="--stack:2.5rem">
+          <section><h2>Check-in &amp; check-out</h2><dl class="kv"><dt>Check-in</dt><dd data-bind="check_in_time">14:00</dd><dt>Check-out</dt><dd data-bind="check_out_time">12:00</dd></dl></section>
+          <section><h2>House rules</h2><p class="policy-text" data-bind="hotel_policies">Loading…</p></section>
+          <section id="cancellation"><h2>Cancellation &amp; refunds</h2><p class="policy-text" data-bind="cancellation_policy">Loading…</p>
+            <p class="policy-text">Unpaid reservations can be cancelled instantly from your account. For prepaid reservations, cancellation requests are reviewed by the hotel and eligible refunds are returned to the original payment method.</p></section>
+          <section><h2>Payments &amp; taxes</h2><p>Rates are shown in Philippine pesos. Applicable taxes (<span data-bind="tax_rate">12</span>%) are added at checkout and shown before you confirm. Online payments are processed by a secure third-party provider; the hotel never stores card numbers or security codes.</p></section>
+          <section id="privacy"><h2>Privacy</h2><p>We collect only the information needed to manage your reservation (name, contact details, stay dates and payment status). It is used to provide your stay, send booking-related emails and meet legal obligations, and is never sold. You may request a copy or deletion of your data by contacting the hotel.</p></section>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer id="site-footer"></footer>
+</body>
+</html>

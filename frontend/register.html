@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create account — StayEase</title>
+  <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <script type="module" src="/assets/js/pages/auth.js"></script>
+</head>
+<body class="site" data-page="register">
+  <div class="auth-page">
+    <aside class="auth-side">
+      <div class="bg" style="background-image:url('https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1400&q=75')"></div>
+      <a class="brand" href="/index.html"><span class="brand-mark" aria-hidden="true">S</span><span class="brand-name">StayEase<small>Hotel &amp; Suites</small></span></a>
+      <blockquote>“Unhurried stays in the heart of the city.”</blockquote>
+    </aside>
+    <main class="auth-main" id="main">
+      <div class="auth-card">
+        <h1>Create your account</h1>
+        <p class="muted">Book faster, manage reservations and get member offers.</p>
+        <form id="form" class="stack mt-3" novalidate>
+          <div class="form-grid">
+            <div class="field"><label for="fn">First name</label><input id="fn" class="input" name="first_name" autocomplete="given-name" required maxlength="80"><div class="field-error"></div></div>
+            <div class="field"><label for="ln">Last name</label><input id="ln" class="input" name="last_name" autocomplete="family-name" required maxlength="80"><div class="field-error"></div></div>
+          </div>
+          <div class="field"><label for="email">Email</label><input id="email" class="input" type="email" name="email" autocomplete="email" required maxlength="191"><div class="field-error"></div></div>
+          <div class="field"><label for="phone">Mobile number <span class="muted">(optional)</span></label><input id="phone" class="input" type="tel" name="phone" autocomplete="tel" pattern="[+\d][\d\s\(\)\-]{6,24}" data-pattern-msg="Enter a valid phone number."><div class="field-error"></div></div>
+          <div class="field"><label for="password">Password</label><input id="password" class="input" type="password" name="password" autocomplete="new-password" required minlength="8" maxlength="128" data-password data-meter><div class="hint">At least 8 characters with a letter and a number.</div><div class="field-error"></div></div>
+          <div class="field"><label for="confirm">Confirm password</label><input id="confirm" class="input" type="password" name="confirm_password" autocomplete="new-password" required data-password><div class="field-error"></div></div>
+          <div class="field"><label class="check"><input type="checkbox" name="terms" required data-required-msg="Please accept the terms to continue."><span>I agree to the <a href="/policies.html" target="_blank">hotel policies</a> and privacy notice.</span></label><div class="field-error"></div></div>
+          <button class="btn btn-lg btn-block" type="submit">Create account</button>
+        </form>
+        <p class="switch">Already have an account? <a href="/login.html">Log in</a></p>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

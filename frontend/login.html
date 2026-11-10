@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log in — StayEase</title>
+  <link rel="icon" href="/assets/icons/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <script type="module" src="/assets/js/pages/auth.js"></script>
+</head>
+<body class="site" data-page="login">
+  <div class="auth-page">
+    <aside class="auth-side">
+      <div class="bg" style="background-image:url('https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1400&q=75')"></div>
+      <a class="brand" href="/index.html"><span class="brand-mark" aria-hidden="true">S</span><span class="brand-name">StayEase<small>Hotel &amp; Suites</small></span></a>
+      <blockquote>“Unhurried stays in the heart of the city.”</blockquote>
+    </aside>
+    <main class="auth-main" id="main">
+      <div class="auth-card">
+        <a class="brand mb-3" href="/index.html" style="display:inline-flex;margin-bottom:28px"><span class="brand-mark" aria-hidden="true">S</span></a>
+        <h1>Welcome back</h1>
+        <p class="muted">Log in to manage your reservations.</p>
+        <div id="notice"></div>
+        <form id="form" class="stack mt-3" novalidate>
+          <div class="field"><label for="email">Email</label><input id="email" class="input" type="email" name="email" autocomplete="email" required maxlength="191"><div class="field-error"></div></div>
+          <div class="field"><div class="row between"><label for="password">Password</label><a class="small" href="/forgot-password.html">Forgot password?</a></div><input id="password" class="input" type="password" name="password" autocomplete="current-password" required data-password><div class="field-error"></div></div>
+          <button class="btn btn-lg btn-block" type="submit">Log in</button>
+        </form>
+        <p class="switch">New to StayEase? <a href="/register.html">Create an account</a></p>
+        <details class="mt-3 small muted" id="demo"><summary>Demo accounts</summary><p class="mt-1 mb-0">Admin: admin@stayease.test / Admin@12345<br>Receptionist: frontdesk@stayease.test / Staff@12345<br>Guest: guest@stayease.test / Guest@12345</p></details>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
