@@ -95,7 +95,7 @@ All settings live in `backend/.env` (see `backend/.env.example`). Secrets never 
 | `RUN_JOBS` | Enables the hold-expiry and reminder jobs (run them on one instance only) |
 
 ### Enabling social sign-in (Google / Facebook)
-The register and login pages offer **Continue with Google**, **Continue with Facebook** and **Continue with email**. Until keys are set, the social buttons show *Setup required* in development and are hidden in production.
+The register and login pages offer **Continue with Google**, **Continue with Facebook** and **Continue with email**. Each social button appears only once its keys are set; until then the pages show the email option alone.
 
 1. **Google**: in Google Cloud Console, go to APIs & Services → Credentials → *Create OAuth client ID* (Web application). Add the authorized redirect URI `{APP_URL}/api/v1/auth/oauth/google/callback`, then set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
 2. **Facebook**: in Meta for Developers, create an app and add *Facebook Login*. Add the valid OAuth redirect URI `{APP_URL}/api/v1/auth/oauth/facebook/callback` (HTTPS in production) and request the `email` permission. Then set `FACEBOOK_APP_ID` and `FACEBOOK_APP_SECRET`.
