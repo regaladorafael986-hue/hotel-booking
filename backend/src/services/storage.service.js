@@ -1,4 +1,6 @@
 // Image storage: Cloudinary when configured, otherwise local disk (backend/storage/uploads → served at /uploads).
+// Local disk is for development only: on Vercel the filesystem is read-only and not persistent, so uploads
+// there require Cloudinary (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET).
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -35,6 +37,9 @@ async function saveImage(file, subfolder = 'misc') {
     return { url: data.secure_url, publicId: data.public_id };
   }
 
+  if (env.isVercel) {
+    throw new AppError(503, 'Image uploads are not configured on this server yet (Cloudinary keys are missing). Please contact the administrator.', { code: 'UPLOADS_NOT_CONFIGURED' });
+  }
   const dir = path.join(UPLOAD_DIR, subfolder);
   fs.mkdirSync(dir, { recursive: true });
   const name = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}.${ext}`;

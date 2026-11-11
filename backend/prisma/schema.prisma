@@ -9,7 +9,7 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL") // Neon pooled connection (-pooler host)
-  directUrl = env("DIRECT_URL")   // Neon direct connection, used by prisma migrate
+  directUrl = env("DATABASE_URL_UNPOOLED") // Neon direct connection, used by prisma migrate (name set by the Vercel Neon integration)
 }
 
 // ───────────────────────────── Enums ─────────────────────────────
@@ -514,4 +514,17 @@ model AuditLog {
   @@index([action])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ───────────────────────────── Operations ─────────────────────────────
+
+// Fixed-window request counters for the login / email rate limits. Kept in the database so every
+// serverless instance shares them (in-memory counters reset per instance). Expired rows are pruned.
+model RateLimit {
+  key     String   @id @db.VarChar(191)
+  hits    Int
+  resetAt DateTime @map("reset_at")
+
+  @@index([resetAt])
+  @@map("rate_limits")
 }

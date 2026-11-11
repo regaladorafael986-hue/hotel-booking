@@ -1,16 +1,12 @@
 // express-session store backed by the Prisma `sessions` table (keeps the schema under Prisma migrations).
+// Sessions live in PostgreSQL, so every serverless instance sees the same logins and CSRF tokens.
+// Expired rows are deleted by the cleanup job (scheduler locally, Vercel Cron in production).
 const session = require('express-session');
 const prisma = require('../config/prisma');
 
 const DEFAULT_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 
 class PrismaSessionStore extends session.Store {
-  constructor() {
-    super();
-    this.cleanupTimer = setInterval(() => this.prune().catch(() => {}), 1000 * 60 * 30);
-    this.cleanupTimer.unref();
-  }
-
   expiry(sess) {
     const maxAge = sess?.cookie?.maxAge;
     return new Date(Date.now() + (typeof maxAge === 'number' ? maxAge : DEFAULT_TTL_MS));

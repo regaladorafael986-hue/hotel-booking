@@ -8,3 +8,5 @@ backend/storage/outbox/
 Thumbs.db
 coverage/
 backend/storage/backups/
+frontend/dist/
+.vercel

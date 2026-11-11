@@ -11,7 +11,7 @@ if (!isLocalUrl(testUrl)) {
   throw new Error(`Tests wipe their database, so they only run against a local one. Set TEST_DATABASE_URL to a local PostgreSQL database (got host "${hostOf(testUrl) || 'none'}").`);
 }
 process.env.DATABASE_URL = testUrl;
-process.env.DIRECT_URL = testUrl; // prisma migrate uses DIRECT_URL — never let it fall through to a production URL
+process.env.DATABASE_URL_UNPOOLED = testUrl; // prisma migrate uses DATABASE_URL_UNPOOLED — never let it fall through to a production URL
 process.env.NODE_ENV = 'test';
 process.env.PAYMENT_PROVIDER = 'mock';
 process.env.RUN_JOBS = 'false';
@@ -34,7 +34,7 @@ const { hotelToday, addDays, formatDate } = require('../src/utils/dates');
 async function reset() {
   migrate();
   const db = prisma();
-  for (const t of ['paymentEvent', 'refund', 'payment', 'review', 'notification', 'bookingRoom', 'booking', 'coupon', 'roomTypeAmenity', 'roomImage', 'room', 'roomType', 'amenity', 'hotelImage', 'hotelSettings', 'auditLog', 'authToken', 'session', 'user']) {
+  for (const t of ['paymentEvent', 'refund', 'payment', 'review', 'notification', 'bookingRoom', 'booking', 'coupon', 'roomTypeAmenity', 'roomImage', 'room', 'roomType', 'amenity', 'hotelImage', 'hotelSettings', 'auditLog', 'authToken', 'session', 'rateLimit', 'user']) {
     await db[t].deleteMany();
   }
   await db.hotelSettings.create({ data: { hotelName: 'Test Hotel', taxRate: '12.00', holdMinutes: 15, payAtHotelAutoConfirm: true, freeCancellationHours: 48 } });

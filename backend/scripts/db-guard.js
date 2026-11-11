@@ -14,8 +14,8 @@ function hostOf(url) {
 
 const isLocalUrl = (url) => Boolean(url) && LOCAL_HOSTS.has(hostOf(url));
 
-/** Every connection string Prisma may use for this process (queries use DATABASE_URL, migrate uses DIRECT_URL). */
-const configuredUrls = () => [process.env.DATABASE_URL, process.env.DIRECT_URL].filter(Boolean);
+/** Every connection string Prisma may use for this process (queries use DATABASE_URL, migrate uses DATABASE_URL_UNPOOLED). */
+const configuredUrls = () => [process.env.DATABASE_URL, process.env.DATABASE_URL_UNPOOLED].filter(Boolean);
 
 /** Throws unless every configured database URL points at this machine. */
 function assertLocalDatabase(action) {

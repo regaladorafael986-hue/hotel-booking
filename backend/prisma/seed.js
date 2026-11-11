@@ -55,14 +55,14 @@ const money = (n) => (Math.round(n * 100) / 100).toFixed(2);
 
 async function wipe() {
   // Child tables first.
-  for (const t of ['paymentEvent', 'refund', 'payment', 'review', 'notification', 'bookingRoom', 'booking', 'coupon', 'roomTypeAmenity', 'roomImage', 'room', 'roomType', 'amenity', 'hotelImage', 'hotelSettings', 'auditLog', 'authToken', 'session', 'user']) {
+  for (const t of ['paymentEvent', 'refund', 'payment', 'review', 'notification', 'bookingRoom', 'booking', 'coupon', 'roomTypeAmenity', 'roomImage', 'room', 'roomType', 'amenity', 'hotelImage', 'hotelSettings', 'auditLog', 'authToken', 'session', 'rateLimit', 'user']) {
     await prisma[t].deleteMany();
   }
 }
 
 /** The demo seed starts by wiping every table, so on any non-local database it only runs when that database is empty. */
 async function assertSafeToWipe() {
-  if (isLocalUrl(process.env.DATABASE_URL) && (!process.env.DIRECT_URL || isLocalUrl(process.env.DIRECT_URL))) return;
+  if (isLocalUrl(process.env.DATABASE_URL) && (!process.env.DATABASE_URL_UNPOOLED || isLocalUrl(process.env.DATABASE_URL_UNPOOLED))) return;
   const [users, bookings, hotels] = await Promise.all([prisma.user.count(), prisma.booking.count(), prisma.hotelSettings.count()]);
   if (users || bookings || hotels) {
     throw new Error(`Refusing to seed: the database at "${hostOf(process.env.DATABASE_URL)}" already has data ` +

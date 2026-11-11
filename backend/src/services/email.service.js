@@ -99,7 +99,12 @@ const templates = {
 
 async function deliver({ to, toName, subject, html }) {
   if (!env.brevo.apiKey) {
-    if (!env.isTest) {
+    if (env.isVercel) {
+      // Read-only filesystem: log only. Links (which can contain password-reset tokens) are logged on
+      // preview deployments only, never in production.
+      const links = process.env.VERCEL_ENV === 'production' ? [] : [...html.matchAll(/href="([^"]+)"/g)].map((m) => m[1].replace(/&amp;/g, '&'));
+      console.log(`[email:not-sent] BREVO_API_KEY is not set. To: ${to} | ${subject}${links.length ? ` | Link: ${links[0]}` : ''}`);
+    } else if (!env.isTest) {
       fs.mkdirSync(OUTBOX, { recursive: true });
       const file = path.join(OUTBOX, `${Date.now()}-${subject.replace(/[^a-z0-9]+/gi, '-').slice(0, 60)}.html`);
       fs.writeFileSync(file, html);

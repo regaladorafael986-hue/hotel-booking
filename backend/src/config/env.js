@@ -2,17 +2,36 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env'), quiet: true });
 
 const bool = (v, d = false) => (v === undefined || v === '' ? d : ['1', 'true', 'yes'].includes(String(v).toLowerCase()));
+const isVercel = Boolean(process.env.VERCEL);
+
+/** Public site URL for emails, OAuth and payment redirects. APP_URL wins; on Vercel it falls back to the deployment's own URL. */
+function resolveAppUrl() {
+  if (process.env.APP_URL) return process.env.APP_URL;
+  if (process.env.VERCEL_ENV === 'production' && process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  if (process.env.VERCEL_BRANCH_URL) return `https://${process.env.VERCEL_BRANCH_URL}`;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return 'http://localhost:4000';
+}
+
+/** Proxy hops to trust for client IP / HTTPS detection. TRUST_PROXY: true = 1 hop, or a number. Vercel's edge is 1 hop. */
+function resolveTrustProxy() {
+  const v = process.env.TRUST_PROXY;
+  if (/^\d+$/.test(v || '')) return Number(v);
+  if (v !== undefined && v !== '') return bool(v) ? 1 : 0;
+  return isVercel ? 1 : 0;
+}
 
 const env = {
   nodeEnv: process.env.NODE_ENV || 'development',
   isProd: process.env.NODE_ENV === 'production',
   isTest: process.env.NODE_ENV === 'test',
+  isVercel, // serverless: no long-running timers, read-only filesystem
   port: Number(process.env.PORT || 4000),
-  appUrl: (process.env.APP_URL || 'http://localhost:4000').replace(/\/$/, ''),
+  appUrl: resolveAppUrl().replace(/\/$/, ''),
   timezone: process.env.HOTEL_TIMEZONE || 'Asia/Manila',
   sessionSecret: process.env.SESSION_SECRET,
-  // true = one proxy in front (e.g. Nginx or Railway); a number = that many hops (e.g. 2 for Vercel → Railway).
-  trustProxy: /^\d+$/.test(process.env.TRUST_PROXY || '') ? Number(process.env.TRUST_PROXY) : bool(process.env.TRUST_PROXY) ? 1 : 0,
+  trustProxy: resolveTrustProxy(),
+  cronSecret: process.env.CRON_SECRET || '', // Vercel Cron sends it as "Authorization: Bearer <CRON_SECRET>"
   requireVerifiedEmailForBooking: bool(process.env.REQUIRE_EMAIL_VERIFICATION_FOR_BOOKING, true),
   brevo: {
     apiKey: process.env.BREVO_API_KEY || '',

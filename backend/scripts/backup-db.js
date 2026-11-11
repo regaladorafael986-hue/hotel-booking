@@ -5,10 +5,10 @@
  *
  *   npm run db:backup
  *
- * Read-only: it never changes the database. On Neon it uses DIRECT_URL (pg_dump cannot run through the
+ * Read-only: it never changes the database. On Neon it uses DATABASE_URL_UNPOOLED (pg_dump cannot run through the
  * pooler). Neon also keeps its own point-in-time restore history; this is an extra, offline copy.
  *
- * Env: DIRECT_URL or DATABASE_URL (required), PG_DUMP_PATH (optional; defaults to "pg_dump" on PATH),
+ * Env: DATABASE_URL_UNPOOLED or DATABASE_URL (required), PG_DUMP_PATH (optional; defaults to "pg_dump" on PATH),
  *      BACKUP_DIR (optional), BACKUP_RETENTION (optional).
  * Restore (into an EMPTY database only): gunzip -c file.sql.gz | psql "postgresql://…"
  */
@@ -18,7 +18,7 @@ const zlib = require('zlib');
 const { spawn } = require('child_process');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env'), quiet: true });
 
-const url = new URL(process.env.DIRECT_URL || process.env.DATABASE_URL || '');
+const url = new URL(process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL || '');
 const db = url.pathname.replace(/^\//, '').split('?')[0];
 const dir = process.env.BACKUP_DIR || path.join(__dirname, '..', 'storage', 'backups');
 const keep = Number(process.env.BACKUP_RETENTION || 14);
