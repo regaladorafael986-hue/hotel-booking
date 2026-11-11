@@ -7,9 +7,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "db:migrate": "node scripts/db-guard.js \"run prisma migrate dev (it can reset the database)\" && prisma migrate dev",
-    "db:deploy": "prisma migrate deploy",
-    "db:status": "prisma migrate status",
+    "db:migrate": "node scripts/db-guard.js \"run prisma migrate dev (it can reset the database)\" && node scripts/prisma.js migrate dev",
+    "db:deploy": "node scripts/prisma.js migrate deploy",
+    "db:status": "node scripts/prisma.js migrate status",
     "db:seed": "node prisma/seed.js",
     "db:seed:prod": "node scripts/seed-if-empty.js",
     "db:reset": "node scripts/reset-local-db.js",

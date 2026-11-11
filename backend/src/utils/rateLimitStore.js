@@ -1,7 +1,7 @@
 // express-rate-limit store backed by the `rate_limits` table, so limits hold across serverless
 // instances. One atomic upsert per counted request: a fixed window per key that restarts when expired.
 const prisma = require('../config/prisma');
-const { utcTimestamp } = require('./sql');
+const { utcTimestamp, tbl } = require('./sql');
 
 class PrismaRateLimitStore {
   /** @param {{ prefix: string }} opts  distinct prefix per limiter, e.g. "auth:" */
@@ -19,10 +19,10 @@ class PrismaRateLimitStore {
     const resetAt = new Date(now.getTime() + this.windowMs);
     const k = this.prefix + key;
     const [row] = await prisma.$queryRaw`
-      INSERT INTO rate_limits (key, hits, reset_at) VALUES (${k}, 1, ${utcTimestamp(resetAt)})
+      INSERT INTO ${tbl('rate_limits')} AS rl (key, hits, reset_at) VALUES (${k}, 1, ${utcTimestamp(resetAt)})
       ON CONFLICT (key) DO UPDATE SET
-        hits     = CASE WHEN rate_limits.reset_at <= ${utcTimestamp(now)} THEN 1 ELSE rate_limits.hits + 1 END,
-        reset_at = CASE WHEN rate_limits.reset_at <= ${utcTimestamp(now)} THEN EXCLUDED.reset_at ELSE rate_limits.reset_at END
+        hits     = CASE WHEN rl.reset_at <= ${utcTimestamp(now)} THEN 1 ELSE rl.hits + 1 END,
+        reset_at = CASE WHEN rl.reset_at <= ${utcTimestamp(now)} THEN EXCLUDED.reset_at ELSE rl.reset_at END
       RETURNING hits, reset_at AS "resetAt"`;
     return { totalHits: Number(row.hits), resetTime: new Date(row.resetAt) };
   }

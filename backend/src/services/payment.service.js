@@ -8,6 +8,7 @@
  *  - Card numbers / CVVs never touch this server (hosted checkout).
  */
 const prisma = require('../config/prisma');
+const { tbl } = require('../utils/sql');
 const env = require('../config/env');
 const AppError = require('../utils/AppError');
 const { serialize } = require('../utils/serialize');
@@ -101,7 +102,7 @@ async function processPaid(provider, evt, raw) {
   const result = await bookingService.withRetry(() => prisma.$transaction(async (tx) => {
     const payment = await findPaymentForEvent(tx, provider, evt);
     if (!payment) { await recordEvent(tx, provider, evt, raw); return { received: true, ignored: 'unknown payment' }; }
-    await tx.$queryRaw`SELECT id FROM bookings WHERE id = ${payment.bookingId} FOR UPDATE`;
+    await tx.$queryRaw`SELECT id FROM ${tbl('bookings')} WHERE id = ${payment.bookingId} FOR UPDATE`;
     const fresh = await tx.payment.findUnique({ where: { id: payment.id } });
     if (fresh.paymentStatus === 'PAID') { await recordEvent(tx, provider, evt, raw); return { received: true, already: true }; }
     if (evt.amount !== undefined && toCents(evt.amount) !== toCents(fresh.amount)) {
@@ -194,7 +195,7 @@ async function processRefundUpdate(provider, evt, raw) {
 
 async function recordFrontDeskPayment(req, { booking_id, amount, payment_method, notes }) {
   const payment = await prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT id FROM bookings WHERE id = ${booking_id} FOR UPDATE`;
+    await tx.$queryRaw`SELECT id FROM ${tbl('bookings')} WHERE id = ${booking_id} FOR UPDATE`;
     const booking = await tx.booking.findUnique({ where: { id: booking_id } });
     if (!booking) throw AppError.notFound('Booking not found.');
     if (!['PENDING_CONFIRMATION', 'CONFIRMED', 'CHECKED_IN', 'CHECKED_OUT'].includes(booking.bookingStatus)) throw AppError.conflict(`Payments cannot be recorded for a ${booking.bookingStatus.toLowerCase().replace('_', ' ')} booking.`);
@@ -239,7 +240,7 @@ async function notifyRefund(refundId) {
 /** Refund (part of) one payment. Reserves the amount first so concurrent refunds can't exceed what was paid. */
 async function refundPayment(req, paymentId, { amount, reason }) {
   const refund = await prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT id FROM payments WHERE id = ${paymentId} FOR UPDATE`;
+    await tx.$queryRaw`SELECT id FROM ${tbl('payments')} WHERE id = ${paymentId} FOR UPDATE`;
     const payment = await tx.payment.findUnique({ where: { id: paymentId }, include: { refunds: true } });
     if (!payment) throw AppError.notFound('Payment not found.');
     if (!['PAID', 'PARTIALLY_REFUNDED'].includes(payment.paymentStatus)) throw AppError.conflict('Only paid payments can be refunded.');

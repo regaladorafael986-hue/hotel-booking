@@ -17,7 +17,7 @@
  */
 const { Prisma } = require('@prisma/client');
 const prisma = require('../config/prisma');
-const { utcTimestamp, utcDate } = require('../utils/sql');
+const { utcTimestamp, utcDate, tbl } = require('../utils/sql');
 const { addDays, formatDate, parseDate } = require('../utils/dates');
 
 const ACTIVE_STATUSES = ['PENDING_PAYMENT', 'PENDING_CONFIRMATION', 'CONFIRMED', 'CHECKED_IN'];
@@ -29,7 +29,7 @@ const activeBookingSql = (now) => Prisma.sql`(b.booking_status IN ('PENDING_CONF
 async function lockRoomTypes(tx, roomTypeIds) {
   const ids = [...new Set(roomTypeIds)].sort((a, b) => a - b);
   if (!ids.length) return;
-  await tx.$queryRaw`SELECT id FROM room_types WHERE id IN (${Prisma.join(ids)}) ORDER BY id FOR UPDATE`;
+  await tx.$queryRaw`SELECT id FROM ${tbl('room_types')} WHERE id IN (${Prisma.join(ids)}) ORDER BY id FOR UPDATE`;
 }
 
 /**
@@ -43,12 +43,12 @@ async function countAvailable(client, { checkIn, checkOut, roomTypeIds, excludeB
     SELECT r.room_type_id AS "roomTypeId",
            COUNT(*) AS total,
            SUM(CASE WHEN busy.room_id IS NULL THEN 1 ELSE 0 END) AS available
-    FROM rooms r
-    JOIN room_types rt ON rt.id = r.room_type_id AND rt.status = 'ACTIVE'
+    FROM ${tbl('rooms')} r
+    JOIN ${tbl('room_types')} rt ON rt.id = r.room_type_id AND rt.status = 'ACTIVE'
     LEFT JOIN (
       SELECT DISTINCT br.room_id
-      FROM booking_rooms br
-      JOIN bookings b ON b.id = br.booking_id
+      FROM ${tbl('booking_rooms')} br
+      JOIN ${tbl('bookings')} b ON b.id = br.booking_id
       WHERE ${activeBookingSql(now)}
         AND b.check_in < ${utcDate(checkOut)} AND b.check_out > ${utcDate(checkIn)}
         ${exclude}
@@ -65,11 +65,11 @@ async function findFreeRooms(client, { roomTypeId, checkIn, checkOut, limit = 10
   const exclude = excludeBookingId ? Prisma.sql`AND b.id <> ${excludeBookingId}` : Prisma.empty;
   const rows = await client.$queryRaw`
     SELECT r.id, r.room_number AS "roomNumber", r.floor, r.housekeeping_status AS "housekeepingStatus"
-    FROM rooms r
+    FROM ${tbl('rooms')} r
     WHERE r.room_type_id = ${roomTypeId}
       AND r.is_active = TRUE AND r.housekeeping_status <> 'MAINTENANCE'
       AND NOT EXISTS (
-        SELECT 1 FROM booking_rooms br JOIN bookings b ON b.id = br.booking_id
+        SELECT 1 FROM ${tbl('booking_rooms')} br JOIN ${tbl('bookings')} b ON b.id = br.booking_id
         WHERE br.room_id = r.id AND ${activeBookingSql(now)}
           AND b.check_in < ${utcDate(checkOut)} AND b.check_out > ${utcDate(checkIn)}
           ${exclude}
@@ -83,7 +83,7 @@ async function findFreeRooms(client, { roomTypeId, checkIn, checkOut, limit = 10
 async function isRoomFree(client, { roomId, checkIn, checkOut, excludeBookingId, now = new Date() }) {
   const exclude = excludeBookingId ? Prisma.sql`AND b.id <> ${excludeBookingId}` : Prisma.empty;
   const rows = await client.$queryRaw`
-    SELECT COUNT(*) AS c FROM booking_rooms br JOIN bookings b ON b.id = br.booking_id
+    SELECT COUNT(*) AS c FROM ${tbl('booking_rooms')} br JOIN ${tbl('bookings')} b ON b.id = br.booking_id
     WHERE br.room_id = ${roomId} AND ${activeBookingSql(now)}
       AND b.check_in < ${utcDate(checkOut)} AND b.check_out > ${utcDate(checkIn)} ${exclude}`;
   return Number(rows[0].c) === 0;
@@ -100,8 +100,8 @@ async function calendar(roomTypeId, month /* YYYY-MM */) {
   const total = await prisma.room.count({ where: { roomTypeId, isActive: true, housekeepingStatus: { not: 'MAINTENANCE' } } });
   const holds = await prisma.$queryRaw`
     SELECT br.room_id AS "roomId", b.check_in AS "checkIn", b.check_out AS "checkOut"
-    FROM booking_rooms br JOIN bookings b ON b.id = br.booking_id
-    JOIN rooms r ON r.id = br.room_id
+    FROM ${tbl('booking_rooms')} br JOIN ${tbl('bookings')} b ON b.id = br.booking_id
+    JOIN ${tbl('rooms')} r ON r.id = br.room_id
     WHERE r.room_type_id = ${roomTypeId} AND r.is_active = TRUE AND r.housekeeping_status <> 'MAINTENANCE'
       AND ${activeBookingSql(now)} AND b.check_in < ${utcDate(end)} AND b.check_out > ${utcDate(start)}`;
   const days = [];

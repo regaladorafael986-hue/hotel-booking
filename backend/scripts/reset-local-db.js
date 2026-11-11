@@ -15,5 +15,5 @@ try {
   process.exit(1);
 }
 
-const r = spawnSync('npx', ['prisma', 'migrate', 'reset', '--force'], { stdio: 'inherit', shell: true, cwd: path.join(__dirname, '..'), env: process.env });
+const r = spawnSync('node', [path.join(__dirname, 'prisma.js'), 'migrate', 'reset', '--force'], { stdio: 'inherit', shell: true, cwd: path.join(__dirname, '..'), env: process.env });
 process.exit(r.status ?? 1);

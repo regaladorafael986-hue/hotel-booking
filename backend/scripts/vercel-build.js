@@ -38,6 +38,6 @@ if (process.env.MIGRATE_ON_BUILD === 'true') {
     console.log('[vercel-build] MIGRATE_ON_BUILD is set but this is not a production build; skipping migrations.');
   } else {
     console.log('[vercel-build] applying pending migrations (prisma migrate deploy; never resets data)…');
-    execSync('npx prisma migrate deploy', { cwd: BACKEND, stdio: 'inherit', env: process.env });
+    execSync('node scripts/prisma.js migrate deploy', { cwd: BACKEND, stdio: 'inherit', env: process.env });
   }
 }

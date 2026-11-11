@@ -1,5 +1,6 @@
 const { Prisma } = require('@prisma/client');
 const prisma = require('../config/prisma');
+const { tbl } = require('../utils/sql');
 const env = require('../config/env');
 const AppError = require('../utils/AppError');
 const { serialize } = require('../utils/serialize');
@@ -111,7 +112,7 @@ async function create(req, data, opts = {}) {
 
   const booking = await withRetry(() => prisma.$transaction(async (tx) => {
     await availability.lockRoomTypes(tx, typeIds);
-    if (couponCode) await tx.$queryRaw`SELECT id FROM coupons WHERE code = ${couponCode} FOR UPDATE`;
+    if (couponCode) await tx.$queryRaw`SELECT id FROM ${tbl('coupons')} WHERE code = ${couponCode} FOR UPDATE`;
 
     const q = await pricing.quote({ ...data, coupon_code: couponCode }, { client: tx, settings });
     const now = new Date();

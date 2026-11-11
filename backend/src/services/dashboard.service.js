@@ -1,6 +1,6 @@
 const { Prisma } = require('@prisma/client');
 const prisma = require('../config/prisma');
-const { utcTimestamp, utcDate } = require('../utils/sql');
+const { utcTimestamp, utcDate, tbl } = require('../utils/sql');
 const env = require('../config/env');
 const { hotelToday, addDays, formatDate, hotelDateTime } = require('../utils/dates');
 const { serialize } = require('../utils/serialize');
@@ -72,16 +72,16 @@ async function charts() {
   const trendStart = hotelDateTime(addDays(today, -29), '00:00');
   const trendRows = await prisma.$queryRaw`SELECT to_char((created_at AT TIME ZONE 'UTC') AT TIME ZONE ${tz}, 'YYYY-MM-DD') AS d, COUNT(*) AS n,
       SUM(CASE WHEN booking_status IN ('CANCELLED','EXPIRED') THEN 1 ELSE 0 END) AS lost
-    FROM bookings WHERE created_at >= ${utcTimestamp(trendStart)} GROUP BY d`;
+    FROM ${tbl('bookings')} WHERE created_at >= ${utcTimestamp(trendStart)} GROUP BY d`;
   const trendMap = new Map(trendRows.map((r) => [r.d, { n: Number(r.n), lost: Number(r.lost) }]));
   const trendLabels = [];
   for (let d = addDays(today, -29); d <= today; d = addDays(d, 1)) trendLabels.push(iso(d));
 
   const methods = await prisma.$queryRaw`SELECT COALESCE(payment_method, provider) AS method, SUM(amount) AS total, COUNT(*) AS n
-    FROM payments WHERE payment_status IN ('PAID','PARTIALLY_REFUNDED','REFUNDED') GROUP BY method ORDER BY total DESC`;
+    FROM ${tbl('payments')} WHERE payment_status IN ('PAID','PARTIALLY_REFUNDED','REFUNDED') GROUP BY method ORDER BY total DESC`;
   const yearAgo = addDays(today, -365);
   const popular = await prisma.$queryRaw`SELECT rt.name AS name, COUNT(*) AS rooms, SUM(b.nights) AS nights
-    FROM booking_rooms br JOIN bookings b ON b.id = br.booking_id JOIN room_types rt ON rt.id = br.room_type_id
+    FROM ${tbl('booking_rooms')} br JOIN ${tbl('bookings')} b ON b.id = br.booking_id JOIN ${tbl('room_types')} rt ON rt.id = br.room_type_id
     WHERE b.booking_status IN ('CONFIRMED','CHECKED_IN','CHECKED_OUT') AND b.check_in >= ${utcDate(yearAgo)}
     GROUP BY rt.name ORDER BY nights DESC LIMIT 8`;
 

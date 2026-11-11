@@ -97,6 +97,41 @@ describe('postgresql compatibility', () => {
     }
   });
 
+  test('raw SQL names its schema, so it never depends on search_path (Neon pooler, shared databases)', async () => {
+    // A client whose search_path points at an empty schema: any unqualified table would fail with "does not exist".
+    const { PrismaClient } = require('@prisma/client');
+    const url = new URL(process.env.DATABASE_URL);
+    url.searchParams.set('schema', 'search_path_trap');
+    const trap = new PrismaClient({ datasourceUrl: url.toString() });
+    try {
+      const rt = await h.makeRoomType({ name: 'PG Schema', rooms: 2 });
+      const checkIn = parseDate(h.day(60));
+      const checkOut = parseDate(h.day(61));
+      const counts = await availability.countAvailable(trap, { checkIn, checkOut, roomTypeIds: [rt.id] });
+      assert.deepEqual(counts.get(rt.id), { total: 2, available: 2 });
+      const free = await availability.findFreeRooms(trap, { roomTypeId: rt.id, checkIn, checkOut });
+      assert.equal(await availability.isRoomFree(trap, { roomId: free[0].id, checkIn, checkOut }), true);
+      await trap.$transaction((tx) => availability.lockRoomTypes(tx, [rt.id]));
+    } finally {
+      await trap.$disconnect();
+    }
+
+    // Every table in every raw query in the source goes through tbl().
+    const fs = require('fs');
+    const path = require('path');
+    const files = [];
+    const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).forEach((e) => (e.isDirectory() ? walk(path.join(d, e.name)) : e.name.endsWith('.js') && files.push(path.join(d, e.name))));
+    walk(path.join(__dirname, '..', 'src'));
+    const offenders = [];
+    for (const file of files) {
+      const src = fs.readFileSync(file, 'utf8');
+      for (const m of src.matchAll(/\$(?:queryRaw|executeRaw)`([\s\S]*?)`/g)) {
+        for (const t of m[1].matchAll(/\b(?:FROM|JOIN|INTO|UPDATE)\s+(?!\$\{tbl\(|\(|SET\b)([A-Za-z_"][\w".]*)/g)) offenders.push(`${path.basename(file)}: ${t[0]}`);
+      }
+    }
+    assert.deepEqual(offenders, [], 'unqualified tables in raw SQL');
+  });
+
   test('duplicate unique values map to a 409 naming the field', async () => {
     const admin = await h.makeUser('ADMIN');
     const rt = await h.makeRoomType({ name: 'PG Duplicate', rooms: 1 });

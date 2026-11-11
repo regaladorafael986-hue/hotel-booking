@@ -3,7 +3,7 @@
  * Revenue = payments collected (by paid_at) minus refunds that succeeded (by refund date), in hotel-local days.
  */
 const prisma = require('../config/prisma');
-const { utcTimestamp } = require('../utils/sql');
+const { utcTimestamp, tbl } = require('../utils/sql');
 const AppError = require('../utils/AppError');
 const env = require('../config/env');
 const { parseDate, formatDate, hotelToday, hotelDateTime, addDays, nightsBetween } = require('../utils/dates');
@@ -46,9 +46,9 @@ async function dailyMoney(startAt, endAt) {
   const tz = env.timezone; // IANA name, e.g. Asia/Manila (PostgreSQL has the tz database built in)
   const [paid, refunded] = await Promise.all([
     prisma.$queryRaw`SELECT to_char((paid_at AT TIME ZONE 'UTC') AT TIME ZONE ${tz}, 'YYYY-MM-DD') AS d, SUM(amount) AS total, COUNT(*) AS n
-      FROM payments WHERE paid_at >= ${utcTimestamp(startAt)} AND paid_at < ${utcTimestamp(endAt)} AND payment_status IN ('PAID','PARTIALLY_REFUNDED','REFUNDED') GROUP BY d`,
+      FROM ${tbl('payments')} WHERE paid_at >= ${utcTimestamp(startAt)} AND paid_at < ${utcTimestamp(endAt)} AND payment_status IN ('PAID','PARTIALLY_REFUNDED','REFUNDED') GROUP BY d`,
     prisma.$queryRaw`SELECT to_char((updated_at AT TIME ZONE 'UTC') AT TIME ZONE ${tz}, 'YYYY-MM-DD') AS d, SUM(amount) AS total
-      FROM refunds WHERE refund_status = 'SUCCEEDED' AND updated_at >= ${utcTimestamp(startAt)} AND updated_at < ${utcTimestamp(endAt)} GROUP BY d`,
+      FROM ${tbl('refunds')} WHERE refund_status = 'SUCCEEDED' AND updated_at >= ${utcTimestamp(startAt)} AND updated_at < ${utcTimestamp(endAt)} GROUP BY d`,
   ]);
   const map = new Map();
   for (const p of paid) map.set(p.d, { gross: toNumber(p.total), count: Number(p.n), refunds: 0 });

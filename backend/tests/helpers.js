@@ -23,7 +23,7 @@ const bcrypt = require('bcryptjs');
 let migrated = false;
 function migrate() {
   if (migrated) return;
-  execSync('npx prisma migrate deploy', { cwd: path.join(__dirname, '..'), env: process.env, stdio: 'pipe' });
+  execSync('node scripts/prisma.js migrate deploy', { cwd: path.join(__dirname, '..'), env: process.env, stdio: 'pipe' });
   migrated = true;
 }
 
