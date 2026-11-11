@@ -1,0 +1,44 @@
+# Render Blueprint: free online demo of StayEase.
+# Render → New → Blueprint → pick this repo. You will be asked for the values marked `sync: false`.
+# The MySQL database is external (Render has no MySQL); see docs/DEPLOYMENT.md, "Free online demo".
+services:
+  - type: web
+    name: stayease
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: cd backend && npm ci --include=dev && npx prisma generate
+    startCommand: cd backend && npx prisma migrate deploy && node scripts/seed-if-empty.js && node src/server.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "true"
+      - key: HOTEL_TIMEZONE
+        value: Asia/Manila
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DATABASE_URL          # e.g. Aiven MySQL service URI, ending in ?sslaccept=accept_invalid_certs
+        sync: false
+      - key: APP_URL               # your Render URL, e.g. https://stayease.onrender.com
+        sync: false
+      # Demo payments: simulated checkout, no real money. Switch to paymongo + keys for real payments.
+      - key: PAYMENT_PROVIDER
+        value: mock
+      - key: ALLOW_MOCK_PAYMENTS
+        value: "true"
+      - key: MOCK_WEBHOOK_SECRET
+        generateValue: true
+      # Without an email service, verification emails only appear in the Render logs.
+      - key: REQUIRE_EMAIL_VERIFICATION_FOR_BOOKING
+        value: "false"
+      # Loads the demo hotel, rooms and history on the first start (only when the database is empty).
+      - key: SEED_DEMO_DATA
+        value: "true"
+      - key: SEED_ADMIN_PASSWORD   # admin@stayease.test (10+ chars, keep private)
+        sync: false
+      - key: SEED_STAFF_PASSWORD   # frontdesk@stayease.test (10+ chars, keep private)
+        sync: false

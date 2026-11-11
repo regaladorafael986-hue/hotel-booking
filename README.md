@@ -69,6 +69,8 @@ Active means pending-confirmation, confirmed, checked-in, or awaiting payment wi
 | Receptionist (limited permissions) | night.audit@stayease.test | Staff@12345 |
 | Customer | guest@stayease.test | Guest@12345 |
 
+These are local passwords. On an online demo, the admin and staff passwords come from `SEED_ADMIN_PASSWORD` / `SEED_STAFF_PASSWORD` (see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)).
+
 Promo codes: `WELCOME10` (10%, max ₱2,500) and `STAYLONGER` (₱1,500 off ₱15,000+).
 
 ### Trying a payment locally
@@ -152,4 +154,4 @@ docs/                     API reference, testing and deployment guides
 ## Further documentation
 - [docs/API.md](docs/API.md): REST API reference
 - [docs/TESTING.md](docs/TESTING.md): automated tests, manual QA checklist and results
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md): production deployment, HTTPS and backups
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md): free online demo (Render + Aiven), production deployment, HTTPS and backups

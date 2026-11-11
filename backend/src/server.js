@@ -8,7 +8,7 @@ async function main() {
   const app = createApp();
   const server = app.listen(env.port, () => {
     console.log(`\n  StayEase running at ${env.appUrl}  (port ${env.port}, ${env.nodeEnv})`);
-    console.log(`  Payments: ${env.payments.provider}${env.payments.provider === 'mock' ? ' (simulated — development only)' : ''}`);
+    console.log(`  Payments: ${env.payments.provider}${env.payments.provider === 'mock' ? ' (simulated — no real money)' : ''}`);
     console.log(`  Email:    ${env.brevo.apiKey ? 'Brevo' : 'console (BREVO_API_KEY not set)'}\n`);
   });
   scheduler.start();

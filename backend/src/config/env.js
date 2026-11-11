@@ -41,8 +41,13 @@ if (!env.sessionSecret || env.sessionSecret.length < 16) {
   if (env.isProd) throw new Error('SESSION_SECRET must be set (>=16 chars) in production');
   env.sessionSecret = env.sessionSecret || 'insecure-dev-session-secret-change-me';
 }
-if (env.isProd && env.payments.provider === 'mock') {
-  throw new Error('PAYMENT_PROVIDER=mock is not allowed in production. Configure a real payment provider.');
+// A public demo may run the simulator in production only when explicitly opted in; it never moves real money.
+env.payments.allowMockInProduction = bool(process.env.ALLOW_MOCK_PAYMENTS);
+if (env.isProd && env.payments.provider === 'mock' && !env.payments.allowMockInProduction) {
+  throw new Error('PAYMENT_PROVIDER=mock is not allowed in production. Configure a real payment provider (or set ALLOW_MOCK_PAYMENTS=true for a demo site).');
+}
+if (env.isProd && env.payments.provider === 'mock' && env.payments.mockWebhookSecret === 'dev-mock-webhook-secret') {
+  throw new Error('Set MOCK_WEBHOOK_SECRET to a random value when running the payment simulator in production.');
 }
 
 module.exports = env;

@@ -8,10 +8,23 @@
  */
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env'), quiet: true });
+// Staff passwords are published in the README, so a production (online demo) seed must supply its own.
+const PW = {
+  admin: process.env.SEED_ADMIN_PASSWORD || 'Admin@12345',
+  staff: process.env.SEED_STAFF_PASSWORD || 'Staff@12345',
+  guest: process.env.SEED_GUEST_PASSWORD || 'Guest@12345',
+};
 if (process.env.NODE_ENV === 'production') {
-  console.error('Refusing to seed a production database.');
-  process.exit(1);
+  if (process.env.SEED_DEMO_DATA !== 'true') {
+    console.error('Refusing to seed a production database (set SEED_DEMO_DATA=true only for a demo site).');
+    process.exit(1);
+  }
+  if (!process.env.SEED_ADMIN_PASSWORD || PW.admin.length < 10 || !process.env.SEED_STAFF_PASSWORD || PW.staff.length < 10) {
+    console.error('Demo seed in production needs SEED_ADMIN_PASSWORD and SEED_STAFF_PASSWORD (10+ characters each).');
+    process.exit(1);
+  }
 }
+const SHOW_PW = process.env.NODE_ENV !== 'production';
 
 const bcrypt = require('bcryptjs');
 const prisma = require('../src/config/prisma');
@@ -146,11 +159,11 @@ async function main() {
 
   // ─── Accounts ───
   const hash = (pw) => bcrypt.hash(pw, 10);
-  const admin = await prisma.user.create({ data: { firstName: 'Andrea', lastName: 'Villanueva', email: 'admin@stayease.test', phone: '+63 917 555 0101', passwordHash: await hash('Admin@12345'), role: 'ADMIN', emailVerifiedAt: new Date() } });
-  const reception = await prisma.user.create({ data: { firstName: 'Marco', lastName: 'Dela Cruz', email: 'frontdesk@stayease.test', phone: '+63 917 555 0102', passwordHash: await hash('Staff@12345'), role: 'RECEPTIONIST', emailVerifiedAt: new Date() } });
-  await prisma.user.create({ data: { firstName: 'Liza', lastName: 'Ramos', email: 'night.audit@stayease.test', phone: '+63 917 555 0103', passwordHash: await hash('Staff@12345'), role: 'RECEPTIONIST', permissions: ['check_in', 'check_out', 'collect_payment', 'housekeeping'], emailVerifiedAt: new Date() } });
+  const admin = await prisma.user.create({ data: { firstName: 'Andrea', lastName: 'Villanueva', email: 'admin@stayease.test', phone: '+63 917 555 0101', passwordHash: await hash(PW.admin), role: 'ADMIN', emailVerifiedAt: new Date() } });
+  const reception = await prisma.user.create({ data: { firstName: 'Marco', lastName: 'Dela Cruz', email: 'frontdesk@stayease.test', phone: '+63 917 555 0102', passwordHash: await hash(PW.staff), role: 'RECEPTIONIST', emailVerifiedAt: new Date() } });
+  await prisma.user.create({ data: { firstName: 'Liza', lastName: 'Ramos', email: 'night.audit@stayease.test', phone: '+63 917 555 0103', passwordHash: await hash(PW.staff), role: 'RECEPTIONIST', permissions: ['check_in', 'check_out', 'collect_payment', 'housekeeping'], emailVerifiedAt: new Date() } });
 
-  const customerPw = await hash('Guest@12345');
+  const customerPw = await hash(PW.guest);
   const names = [
     ['Jamie', 'Santos'], ['Paolo', 'Reyes'], ['Bea', 'Mendoza'], ['Carlo', 'Garcia'], ['Nina', 'Torres'], ['Miguel', 'Aquino'], ['Sofia', 'Lim'],
     ['Daniel', 'Tan'], ['Kristine', 'Navarro'], ['Rafael', 'Castillo'], ['Hannah', 'Lee'], ['Ethan', 'Cruz'], ['Isabel', 'Fernandez'], ['Luis', 'Bautista'],
@@ -281,9 +294,10 @@ async function main() {
   console.log(`  ✓ Hotel "${settings.hotelName}", ${types.length} room categories, ${counts[3]} physical rooms`);
   console.log(`  ✓ ${customers.length} customers, ${counts[0]} bookings (${created} generated), ${counts[1]} payments, ${counts[2]} reviews`);
   console.log('\n  Demo logins:');
-  console.log('    Admin         admin@stayease.test      / Admin@12345');
-  console.log('    Receptionist  frontdesk@stayease.test  / Staff@12345');
-  console.log('    Customer      guest@stayease.test      / Guest@12345\n');
+  const show = (pw) => (SHOW_PW ? pw : '(set via SEED_* environment variable)');
+  console.log(`    Admin         admin@stayease.test      / ${show(PW.admin)}`);
+  console.log(`    Receptionist  frontdesk@stayease.test  / ${show(PW.staff)}`);
+  console.log(`    Customer      guest@stayease.test      / ${process.env.SEED_GUEST_PASSWORD ? show(PW.guest) : PW.guest}\n`);
 }
 
 main()

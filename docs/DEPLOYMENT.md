@@ -2,6 +2,24 @@
 
 StayEase is a single Node.js process that serves the API and the static frontend from one origin. Any host that runs Node 20+ and can reach MySQL 8 / MariaDB 10.4+ will work, such as a VPS (Ubuntu + Nginx), Render, Railway or Fly.io.
 
+> GitHub Pages cannot host StayEase: it serves static files only, so the API, logins and bookings would not work.
+
+## Free online demo (Render + Aiven MySQL)
+A free, publicly reachable demo with simulated payments. Both services have free plans with no card required at the time of writing.
+
+1. **Database (Aiven):** sign up at aiven.io → *Create service* → **MySQL** → **Free plan** → pick a region near Singapore. When it is running, copy the **Service URI** (`mysql://avnadmin:…@….aivencloud.com:12345/defaultdb?ssl-mode=REQUIRED`). For Prisma, replace `?ssl-mode=REQUIRED` with `?sslaccept=accept_invalid_certs`.
+2. **Web app (Render):** sign up at render.com with GitHub → *New* → **Blueprint** → choose this repository. Render reads `render.yaml` and asks for:
+   - `DATABASE_URL`: the Aiven URI from step 1
+   - `APP_URL`: `https://stayease.onrender.com` (or whatever name Render gives the service; update it after the first deploy if it differs)
+   - `SEED_ADMIN_PASSWORD`, `SEED_STAFF_PASSWORD`: private passwords (10+ characters) for `admin@stayease.test` and `frontdesk@stayease.test`. The README passwords do **not** work online.
+3. Click **Apply**. The first start applies migrations and loads the demo hotel, rooms and history. Later restarts never wipe data. The demo guest login stays `guest@stayease.test` / `Guest@12345`.
+
+Limits of the free demo:
+- The free Render service sleeps after ~15 minutes without visitors; the next visit takes up to a minute to wake it.
+- Payments use the simulator (`ALLOW_MOCK_PAYMENTS=true`); no real money moves. For real payments set `PAYMENT_PROVIDER=paymongo` with keys and remove `ALLOW_MOCK_PAYMENTS`.
+- Emails are only written to the Render logs until `BREVO_API_KEY` is set (Brevo's free plan is enough), so the demo sets `REQUIRE_EMAIL_VERIFICATION_FOR_BOOKING=false`.
+- Uploaded images are lost when the service restarts unless Cloudinary keys are set (free plan available). The demo rooms use hosted images, so they are unaffected.
+
 ## 1. Production database
 1. Create a managed MySQL database (or install MySQL on the server) and a dedicated user:
    ```sql
