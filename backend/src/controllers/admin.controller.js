@@ -115,7 +115,7 @@ module.exports = {
     const pg = getPagination(q, { defaultSize: 25 });
     const where = { AND: [] };
     if (q.action) where.AND.push({ action: q.action });
-    if (q.q) where.AND.push({ OR: [{ description: { contains: q.q } }, { action: { contains: q.q } }, { user: { email: { contains: q.q } } }] });
+    if (q.q) where.AND.push({ OR: [{ description: { contains: q.q, mode: 'insensitive' } }, { action: { contains: q.q, mode: 'insensitive' } }, { user: { email: { contains: q.q, mode: 'insensitive' } } }] });
     if (q.from) where.AND.push({ createdAt: { gte: parseDate(q.from) } });
     if (q.to) where.AND.push({ createdAt: { lt: addDays(parseDate(q.to), 1) } });
     const [rows, total, actions] = await Promise.all([

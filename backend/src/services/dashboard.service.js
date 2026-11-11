@@ -1,6 +1,8 @@
 const { Prisma } = require('@prisma/client');
 const prisma = require('../config/prisma');
-const { hotelToday, addDays, formatDate, hotelDateTime, tzOffsetString } = require('../utils/dates');
+const { utcTimestamp, utcDate } = require('../utils/sql');
+const env = require('../config/env');
+const { hotelToday, addDays, formatDate, hotelDateTime } = require('../utils/dates');
 const { serialize } = require('../utils/serialize');
 const { toNumber } = require('../utils/money');
 const availability = require('./availability.service');
@@ -66,11 +68,11 @@ async function charts() {
     reports.occupancySeries({ from: iso(addDays(today, -29)), to: iso(addDays(today, 0)) }),
   ]);
 
-  const off = tzOffsetString();
+  const tz = env.timezone; // IANA name, e.g. Asia/Manila (PostgreSQL has the tz database built in)
   const trendStart = hotelDateTime(addDays(today, -29), '00:00');
-  const trendRows = await prisma.$queryRaw`SELECT DATE_FORMAT(CONVERT_TZ(created_at, '+00:00', ${off}), '%Y-%m-%d') AS d, COUNT(*) AS n,
+  const trendRows = await prisma.$queryRaw`SELECT to_char((created_at AT TIME ZONE 'UTC') AT TIME ZONE ${tz}, 'YYYY-MM-DD') AS d, COUNT(*) AS n,
       SUM(CASE WHEN booking_status IN ('CANCELLED','EXPIRED') THEN 1 ELSE 0 END) AS lost
-    FROM bookings WHERE created_at >= ${trendStart} GROUP BY d`;
+    FROM bookings WHERE created_at >= ${utcTimestamp(trendStart)} GROUP BY d`;
   const trendMap = new Map(trendRows.map((r) => [r.d, { n: Number(r.n), lost: Number(r.lost) }]));
   const trendLabels = [];
   for (let d = addDays(today, -29); d <= today; d = addDays(d, 1)) trendLabels.push(iso(d));
@@ -80,7 +82,7 @@ async function charts() {
   const yearAgo = addDays(today, -365);
   const popular = await prisma.$queryRaw`SELECT rt.name AS name, COUNT(*) AS rooms, SUM(b.nights) AS nights
     FROM booking_rooms br JOIN bookings b ON b.id = br.booking_id JOIN room_types rt ON rt.id = br.room_type_id
-    WHERE b.booking_status IN ('CONFIRMED','CHECKED_IN','CHECKED_OUT') AND b.check_in >= ${yearAgo}
+    WHERE b.booking_status IN ('CONFIRMED','CHECKED_IN','CHECKED_OUT') AND b.check_in >= ${utcDate(yearAgo)}
     GROUP BY rt.name ORDER BY nights DESC LIMIT 8`;
 
   return {

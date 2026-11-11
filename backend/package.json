@@ -7,12 +7,15 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "db:migrate": "prisma migrate dev",
+    "db:migrate": "node scripts/db-guard.js \"run prisma migrate dev (it can reset the database)\" && prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
+    "db:status": "prisma migrate status",
     "db:seed": "node prisma/seed.js",
-    "db:reset": "prisma migrate reset --force",
+    "db:seed:prod": "node scripts/seed-if-empty.js",
+    "db:reset": "node scripts/reset-local-db.js",
     "test": "node --test --test-concurrency=1 tests/",
-    "db:backup": "node scripts/backup-db.js"
+    "db:backup": "node scripts/backup-db.js",
+    "postinstall": "prisma generate"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

@@ -1,10 +1,17 @@
-// Test harness: points Prisma at a separate database (stayease_test), resets it, and builds fixtures.
+// Test harness: points Prisma at a separate LOCAL database (stayease_test), resets it, and builds fixtures.
+// Every test run deletes all rows, so it refuses any database that is not on this machine (e.g. Neon).
 const path = require('path');
 const { execSync } = require('child_process');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env'), quiet: true });
+const { isLocalUrl, hostOf } = require('../scripts/db-guard');
 
-const base = process.env.DATABASE_URL || 'mysql://root:@localhost:3306/stayease_db';
-process.env.DATABASE_URL = process.env.TEST_DATABASE_URL || base.replace(/\/[^/?]+(\?|$)/, '/stayease_test$1');
+const base = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/stayease_db';
+const testUrl = process.env.TEST_DATABASE_URL || (isLocalUrl(base) ? base.replace(/\/[^/?]+(\?|$)/, '/stayease_test$1') : '');
+if (!isLocalUrl(testUrl)) {
+  throw new Error(`Tests wipe their database, so they only run against a local one. Set TEST_DATABASE_URL to a local PostgreSQL database (got host "${hostOf(testUrl) || 'none'}").`);
+}
+process.env.DATABASE_URL = testUrl;
+process.env.DIRECT_URL = testUrl; // prisma migrate uses DIRECT_URL — never let it fall through to a production URL
 process.env.NODE_ENV = 'test';
 process.env.PAYMENT_PROVIDER = 'mock';
 process.env.RUN_JOBS = 'false';

@@ -42,7 +42,7 @@ async function list(q = {}) {
   if (q.status) where.housekeepingStatus = q.status;
   if (q.active === 'true') where.isActive = true;
   if (q.active === 'false') where.isActive = false;
-  if (q.q) where.roomNumber = { contains: q.q };
+  if (q.q) where.roomNumber = { contains: q.q, mode: 'insensitive' };
   const rooms = await prisma.room.findMany({ where, include: { roomType: { select: { id: true, name: true, status: true } } }, orderBy: [{ floor: 'asc' }, { roomNumber: 'asc' }] });
   const occ = await occupancyMap(rooms.map((r) => r.id));
   return rooms.map((r) => ({ ...serialize(r), occupancy: occ.get(r.id)?.occupancy || (r.isActive ? 'VACANT' : 'INACTIVE'), current_booking: occ.get(r.id)?.booking || null }));

@@ -28,9 +28,12 @@ function errorHandler(err, req, res, next) {
   } else if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === 'P2002') {
       status = 409;
-      // MySQL reports the index name (e.g. "rooms_room_number_key"); turn it into the field name.
-      const raw = [].concat(err.meta?.target || [])[0] || '';
-      const field = String(raw).replace(/^[a-z]+_/, '').replace(/_(key|unique)$/, '');
+      // PostgreSQL reports the column list (e.g. ["room_number"]); MySQL reported the index name
+      // (e.g. "rooms_room_number_key"), which still needs its table prefix and suffix stripped.
+      const target = err.meta?.target;
+      const field = Array.isArray(target)
+        ? String(target[0] || '')
+        : String(target || '').replace(/^[a-z]+_/, '').replace(/_(key|unique)$/, '');
       const label = field ? field.replace(/_/g, ' ') : 'value';
       const message = `This ${label} is already in use.`;
       body = { error: { message, code: 'DUPLICATE', details: field ? { fields: { [field]: message } } : undefined } };

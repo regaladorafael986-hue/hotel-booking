@@ -1,13 +1,15 @@
 // StayEase — single-hotel booking & reservation management
-// Database: MySQL / MariaDB (stayease_db). Monetary values use DECIMAL(12,2).
+// Database: PostgreSQL (Neon). Monetary values use NUMERIC(12,2).
+// The original MySQL migrations are archived in prisma/migrations-mysql (history only, never applied).
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // Neon pooled connection (-pooler host)
+  directUrl = env("DIRECT_URL")   // Neon direct connection, used by prisma migrate
 }
 
 // ───────────────────────────── Enums ─────────────────────────────
@@ -410,7 +412,7 @@ model PaymentEvent {
   provider    String   @db.VarChar(30)
   eventId     String   @map("event_id") @db.VarChar(120)
   eventType   String   @map("event_type") @db.VarChar(80)
-  payload     String   @db.MediumText
+  payload     String   @db.Text
   processedAt DateTime @default(now()) @map("processed_at")
 
   @@unique([provider, eventId])
@@ -441,7 +443,7 @@ model Review {
   id        Int          @id @default(autoincrement())
   bookingId Int          @unique @map("booking_id") // one review per booking
   userId    Int          @map("user_id")
-  rating    Int          @db.TinyInt
+  rating    Int          @db.SmallInt
   title     String?      @db.VarChar(120)
   comment   String?      @db.Text
   status    ReviewStatus @default(PENDING)

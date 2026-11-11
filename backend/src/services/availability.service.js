@@ -17,13 +17,14 @@
  */
 const { Prisma } = require('@prisma/client');
 const prisma = require('../config/prisma');
+const { utcTimestamp, utcDate } = require('../utils/sql');
 const { addDays, formatDate, parseDate } = require('../utils/dates');
 
 const ACTIVE_STATUSES = ['PENDING_PAYMENT', 'PENDING_CONFIRMATION', 'CONFIRMED', 'CHECKED_IN'];
 
 /** SQL fragment: booking alias `b` is holding inventory at time `now`. */
 const activeBookingSql = (now) => Prisma.sql`(b.booking_status IN ('PENDING_CONFIRMATION','CONFIRMED','CHECKED_IN')
-  OR (b.booking_status = 'PENDING_PAYMENT' AND b.expires_at > ${now}))`;
+  OR (b.booking_status = 'PENDING_PAYMENT' AND b.expires_at > ${utcTimestamp(now)}))`;
 
 async function lockRoomTypes(tx, roomTypeIds) {
   const ids = [...new Set(roomTypeIds)].sort((a, b) => a - b);
@@ -39,7 +40,7 @@ async function countAvailable(client, { checkIn, checkOut, roomTypeIds, excludeB
   const typeFilter = roomTypeIds?.length ? Prisma.sql`AND r.room_type_id IN (${Prisma.join(roomTypeIds)})` : Prisma.empty;
   const exclude = excludeBookingId ? Prisma.sql`AND b.id <> ${excludeBookingId}` : Prisma.empty;
   const rows = await client.$queryRaw`
-    SELECT r.room_type_id AS roomTypeId,
+    SELECT r.room_type_id AS "roomTypeId",
            COUNT(*) AS total,
            SUM(CASE WHEN busy.room_id IS NULL THEN 1 ELSE 0 END) AS available
     FROM rooms r
@@ -49,10 +50,10 @@ async function countAvailable(client, { checkIn, checkOut, roomTypeIds, excludeB
       FROM booking_rooms br
       JOIN bookings b ON b.id = br.booking_id
       WHERE ${activeBookingSql(now)}
-        AND b.check_in < ${checkOut} AND b.check_out > ${checkIn}
+        AND b.check_in < ${utcDate(checkOut)} AND b.check_out > ${utcDate(checkIn)}
         ${exclude}
     ) busy ON busy.room_id = r.id
-    WHERE r.is_active = 1 AND r.housekeeping_status <> 'MAINTENANCE' ${typeFilter}
+    WHERE r.is_active = TRUE AND r.housekeeping_status <> 'MAINTENANCE' ${typeFilter}
     GROUP BY r.room_type_id`;
   const map = new Map();
   for (const r of rows) map.set(Number(r.roomTypeId), { total: Number(r.total), available: Number(r.available) });
@@ -63,14 +64,14 @@ async function countAvailable(client, { checkIn, checkOut, roomTypeIds, excludeB
 async function findFreeRooms(client, { roomTypeId, checkIn, checkOut, limit = 100, excludeBookingId, now = new Date() }) {
   const exclude = excludeBookingId ? Prisma.sql`AND b.id <> ${excludeBookingId}` : Prisma.empty;
   const rows = await client.$queryRaw`
-    SELECT r.id, r.room_number AS roomNumber, r.floor, r.housekeeping_status AS housekeepingStatus
+    SELECT r.id, r.room_number AS "roomNumber", r.floor, r.housekeeping_status AS "housekeepingStatus"
     FROM rooms r
     WHERE r.room_type_id = ${roomTypeId}
-      AND r.is_active = 1 AND r.housekeeping_status <> 'MAINTENANCE'
+      AND r.is_active = TRUE AND r.housekeeping_status <> 'MAINTENANCE'
       AND NOT EXISTS (
         SELECT 1 FROM booking_rooms br JOIN bookings b ON b.id = br.booking_id
         WHERE br.room_id = r.id AND ${activeBookingSql(now)}
-          AND b.check_in < ${checkOut} AND b.check_out > ${checkIn}
+          AND b.check_in < ${utcDate(checkOut)} AND b.check_out > ${utcDate(checkIn)}
           ${exclude}
       )
     ORDER BY r.floor, r.room_number
@@ -84,7 +85,7 @@ async function isRoomFree(client, { roomId, checkIn, checkOut, excludeBookingId,
   const rows = await client.$queryRaw`
     SELECT COUNT(*) AS c FROM booking_rooms br JOIN bookings b ON b.id = br.booking_id
     WHERE br.room_id = ${roomId} AND ${activeBookingSql(now)}
-      AND b.check_in < ${checkOut} AND b.check_out > ${checkIn} ${exclude}`;
+      AND b.check_in < ${utcDate(checkOut)} AND b.check_out > ${utcDate(checkIn)} ${exclude}`;
   return Number(rows[0].c) === 0;
 }
 
@@ -98,11 +99,11 @@ async function calendar(roomTypeId, month /* YYYY-MM */) {
   const now = new Date();
   const total = await prisma.room.count({ where: { roomTypeId, isActive: true, housekeepingStatus: { not: 'MAINTENANCE' } } });
   const holds = await prisma.$queryRaw`
-    SELECT br.room_id AS roomId, b.check_in AS checkIn, b.check_out AS checkOut
+    SELECT br.room_id AS "roomId", b.check_in AS "checkIn", b.check_out AS "checkOut"
     FROM booking_rooms br JOIN bookings b ON b.id = br.booking_id
     JOIN rooms r ON r.id = br.room_id
-    WHERE r.room_type_id = ${roomTypeId} AND r.is_active = 1 AND r.housekeeping_status <> 'MAINTENANCE'
-      AND ${activeBookingSql(now)} AND b.check_in < ${end} AND b.check_out > ${start}`;
+    WHERE r.room_type_id = ${roomTypeId} AND r.is_active = TRUE AND r.housekeeping_status <> 'MAINTENANCE'
+      AND ${activeBookingSql(now)} AND b.check_in < ${utcDate(end)} AND b.check_out > ${utcDate(start)}`;
   const days = [];
   for (let d = start; d < end; d = addDays(d, 1)) {
     const busy = new Set(holds.filter((h) => h.checkIn <= d && h.checkOut > d).map((h) => Number(h.roomId)));

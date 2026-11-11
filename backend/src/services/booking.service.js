@@ -31,7 +31,8 @@ async function withRetry(fn, attempts = 3) {
     try {
       return await fn();
     } catch (err) {
-      const retriable = err?.code === 'P2034' || /deadlock|lock wait timeout/i.test(err?.message || '');
+      // P2034 = write conflict / deadlock; PostgreSQL: 40001 serialization failure, 40P01 deadlock detected.
+      const retriable = err?.code === 'P2034' || /deadlock|lock wait timeout|could not serialize|40001|40P01/i.test(err?.message || '');
       if (!retriable || i >= attempts) throw err;
       await new Promise((r) => setTimeout(r, 40 * i + Math.random() * 60));
     }
@@ -242,12 +243,12 @@ function adminWhere(q) {
     const parts = term.split(/\s+/);
     where.AND.push({
       OR: [
-        { bookingReference: { contains: term } },
-        { guestEmail: { contains: term } },
-        { guestPhone: { contains: term } },
-        { guestFirstName: { contains: term } },
-        { guestLastName: { contains: term } },
-        ...(parts.length > 1 ? [{ AND: [{ guestFirstName: { contains: parts[0] } }, { guestLastName: { contains: parts.slice(1).join(' ') } }] }] : []),
+        { bookingReference: { contains: term, mode: 'insensitive' } },
+        { guestEmail: { contains: term, mode: 'insensitive' } },
+        { guestPhone: { contains: term, mode: 'insensitive' } },
+        { guestFirstName: { contains: term, mode: 'insensitive' } },
+        { guestLastName: { contains: term, mode: 'insensitive' } },
+        ...(parts.length > 1 ? [{ AND: [{ guestFirstName: { contains: parts[0], mode: 'insensitive' } }, { guestLastName: { contains: parts.slice(1).join(' '), mode: 'insensitive' } }] }] : []),
       ],
     });
   }

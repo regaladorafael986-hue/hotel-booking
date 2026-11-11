@@ -31,6 +31,7 @@ const prisma = require('../src/config/prisma');
 const availability = require('../src/services/availability.service');
 const { hotelToday, addDays, hotelDateTime } = require('../src/utils/dates');
 const { randomCode } = require('../src/utils/crypto');
+const { isLocalUrl, hostOf } = require('../scripts/db-guard');
 
 const img = (id, w = 1600) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&q=80`;
 const P = {
@@ -59,7 +60,18 @@ async function wipe() {
   }
 }
 
+/** The demo seed starts by wiping every table, so on any non-local database it only runs when that database is empty. */
+async function assertSafeToWipe() {
+  if (isLocalUrl(process.env.DATABASE_URL) && (!process.env.DIRECT_URL || isLocalUrl(process.env.DIRECT_URL))) return;
+  const [users, bookings, hotels] = await Promise.all([prisma.user.count(), prisma.booking.count(), prisma.hotelSettings.count()]);
+  if (users || bookings || hotels) {
+    throw new Error(`Refusing to seed: the database at "${hostOf(process.env.DATABASE_URL)}" already has data ` +
+      `(${users} users, ${bookings} bookings) and seeding would erase it.`);
+  }
+}
+
 async function main() {
+  await assertSafeToWipe();
   console.log('Seeding StayEase demo data…');
   await wipe();
   const today = hotelToday();

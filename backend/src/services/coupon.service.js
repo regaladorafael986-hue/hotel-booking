@@ -30,7 +30,7 @@ function withState(c) {
 
 async function list(q = {}) {
   const where = {};
-  if (q.q) where.OR = [{ code: { contains: q.q } }, { description: { contains: q.q } }];
+  if (q.q) where.OR = [{ code: { contains: q.q, mode: 'insensitive' } }, { description: { contains: q.q, mode: 'insensitive' } }];
   if (q.status) where.status = q.status;
   const pg = getPagination(q);
   const [rows, total] = await Promise.all([prisma.coupon.findMany({ where, orderBy: { createdAt: 'desc' }, skip: pg.skip, take: pg.take }), prisma.coupon.count({ where })]);

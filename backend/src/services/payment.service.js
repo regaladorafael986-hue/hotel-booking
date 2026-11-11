@@ -303,7 +303,7 @@ async function getById(user, id) {
 function adminWhere(q) {
   const where = { AND: [] };
   if (q.status) where.AND.push({ paymentStatus: { in: q.status.split(',').filter((s) => /^[A-Z_]+$/.test(s)) } });
-  if (q.q) where.AND.push({ OR: [{ paymentReference: { contains: q.q } }, { booking: { bookingReference: { contains: q.q } } }, { booking: { guestLastName: { contains: q.q } } }, { booking: { guestFirstName: { contains: q.q } } }] });
+  if (q.q) where.AND.push({ OR: [{ paymentReference: { contains: q.q, mode: 'insensitive' } }, { booking: { bookingReference: { contains: q.q, mode: 'insensitive' } } }, { booking: { guestLastName: { contains: q.q, mode: 'insensitive' } } }, { booking: { guestFirstName: { contains: q.q, mode: 'insensitive' } } }] });
   if (q.from) where.AND.push({ createdAt: { gte: parseDate(q.from) } });
   if (q.to) where.AND.push({ createdAt: { lt: addDays(parseDate(q.to), 1) } });
   return where;

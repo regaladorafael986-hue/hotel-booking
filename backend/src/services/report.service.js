@@ -3,8 +3,10 @@
  * Revenue = payments collected (by paid_at) minus refunds that succeeded (by refund date), in hotel-local days.
  */
 const prisma = require('../config/prisma');
+const { utcTimestamp } = require('../utils/sql');
 const AppError = require('../utils/AppError');
-const { parseDate, formatDate, hotelToday, hotelDateTime, tzOffsetString, addDays, nightsBetween } = require('../utils/dates');
+const env = require('../config/env');
+const { parseDate, formatDate, hotelToday, hotelDateTime, addDays, nightsBetween } = require('../utils/dates');
 const { serialize } = require('../utils/serialize');
 const { toNumber } = require('../utils/money');
 
@@ -41,12 +43,12 @@ function allBuckets(from, to, group) {
 }
 
 async function dailyMoney(startAt, endAt) {
-  const off = tzOffsetString();
+  const tz = env.timezone; // IANA name, e.g. Asia/Manila (PostgreSQL has the tz database built in)
   const [paid, refunded] = await Promise.all([
-    prisma.$queryRaw`SELECT DATE_FORMAT(CONVERT_TZ(paid_at, '+00:00', ${off}), '%Y-%m-%d') AS d, SUM(amount) AS total, COUNT(*) AS n
-      FROM payments WHERE paid_at >= ${startAt} AND paid_at < ${endAt} AND payment_status IN ('PAID','PARTIALLY_REFUNDED','REFUNDED') GROUP BY d`,
-    prisma.$queryRaw`SELECT DATE_FORMAT(CONVERT_TZ(updated_at, '+00:00', ${off}), '%Y-%m-%d') AS d, SUM(amount) AS total
-      FROM refunds WHERE refund_status = 'SUCCEEDED' AND updated_at >= ${startAt} AND updated_at < ${endAt} GROUP BY d`,
+    prisma.$queryRaw`SELECT to_char((paid_at AT TIME ZONE 'UTC') AT TIME ZONE ${tz}, 'YYYY-MM-DD') AS d, SUM(amount) AS total, COUNT(*) AS n
+      FROM payments WHERE paid_at >= ${utcTimestamp(startAt)} AND paid_at < ${utcTimestamp(endAt)} AND payment_status IN ('PAID','PARTIALLY_REFUNDED','REFUNDED') GROUP BY d`,
+    prisma.$queryRaw`SELECT to_char((updated_at AT TIME ZONE 'UTC') AT TIME ZONE ${tz}, 'YYYY-MM-DD') AS d, SUM(amount) AS total
+      FROM refunds WHERE refund_status = 'SUCCEEDED' AND updated_at >= ${utcTimestamp(startAt)} AND updated_at < ${utcTimestamp(endAt)} GROUP BY d`,
   ]);
   const map = new Map();
   for (const p of paid) map.set(p.d, { gross: toNumber(p.total), count: Number(p.n), refunds: 0 });

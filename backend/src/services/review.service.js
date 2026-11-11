@@ -39,7 +39,7 @@ async function listMine(user) {
 async function listAdmin(q = {}) {
   const where = {};
   if (q.status) where.status = q.status;
-  if (q.q) where.OR = [{ comment: { contains: q.q } }, { title: { contains: q.q } }, { booking: { bookingReference: { contains: q.q } } }, { user: { lastName: { contains: q.q } } }];
+  if (q.q) where.OR = [{ comment: { contains: q.q, mode: 'insensitive' } }, { title: { contains: q.q, mode: 'insensitive' } }, { booking: { bookingReference: { contains: q.q, mode: 'insensitive' } } }, { user: { lastName: { contains: q.q, mode: 'insensitive' } } }];
   const pg = getPagination(q);
   const [rows, total] = await Promise.all([
     prisma.review.findMany({ where, include: { user: { select: { id: true, firstName: true, lastName: true, email: true } }, booking: { select: { id: true, bookingReference: true, checkIn: true, checkOut: true } } }, orderBy: { createdAt: 'desc' }, skip: pg.skip, take: pg.take }),

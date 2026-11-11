@@ -29,7 +29,7 @@ async function listPublic(q = {}) {
   if (q.min_price !== undefined || q.max_price !== undefined) {
     where.basePrice = { ...(q.min_price !== undefined ? { gte: String(q.min_price) } : {}), ...(q.max_price !== undefined ? { lte: String(q.max_price) } : {}) };
   }
-  if (q.bed_type) where.bedType = { contains: q.bed_type };
+  if (q.bed_type) where.bedType = { contains: q.bed_type, mode: 'insensitive' };
   if (q.featured === 'true') where.isFeatured = true;
   if (q.amenities?.length) where.AND = q.amenities.map((amenityId) => ({ amenities: { some: { amenityId } } }));
   let rows = await prisma.roomType.findMany({ where, include, orderBy: { basePrice: 'asc' } });
@@ -58,7 +58,7 @@ async function getPublic(idOrSlug) {
 async function listAdmin(q = {}) {
   const where = {};
   if (q.status) where.status = q.status;
-  if (q.q) where.name = { contains: q.q };
+  if (q.q) where.name = { contains: q.q, mode: 'insensitive' };
   const rows = await prisma.roomType.findMany({ where, include: { ...include, _count: { select: { rooms: true } } }, orderBy: [{ status: 'asc' }, { name: 'asc' }] });
   return rows.map(shape);
 }

@@ -32,7 +32,7 @@ function hotelDateTime(date, hhmm = '00:00') {
   return new Date(wall - tzOffsetMs(new Date(wall)));
 }
 
-/** Hotel UTC offset as '+08:00' (for MySQL CONVERT_TZ bucketing; tz tables are not required). */
+/** Hotel UTC offset as '+08:00'. */
 function tzOffsetString(at = new Date()) {
   const mins = Math.round(tzOffsetMs(at) / 60000);
   const sign = mins >= 0 ? '+' : '-';

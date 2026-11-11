@@ -7,7 +7,7 @@ const { store } = require('../utils/sessionStore');
 const { toPublicUser, hashPassword } = require('./auth.service');
 const audit = require('./audit.service');
 
-const searchWhere = (q) => (q ? { OR: [{ firstName: { contains: q } }, { lastName: { contains: q } }, { email: { contains: q } }, { phone: { contains: q } }] } : {});
+const searchWhere = (q) => (q ? { OR: [{ firstName: { contains: q, mode: 'insensitive' } }, { lastName: { contains: q, mode: 'insensitive' } }, { email: { contains: q, mode: 'insensitive' } }, { phone: { contains: q, mode: 'insensitive' } }] } : {});
 
 async function listCustomers(q = {}) {
   const where = { role: 'CUSTOMER', ...searchWhere(q.q), ...(q.status ? { accountStatus: q.status } : {}) };
