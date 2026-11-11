@@ -11,7 +11,8 @@ const env = {
   appUrl: (process.env.APP_URL || 'http://localhost:4000').replace(/\/$/, ''),
   timezone: process.env.HOTEL_TIMEZONE || 'Asia/Manila',
   sessionSecret: process.env.SESSION_SECRET,
-  trustProxy: bool(process.env.TRUST_PROXY),
+  // true = one proxy in front (e.g. Nginx or Railway); a number = that many hops (e.g. 2 for Vercel → Railway).
+  trustProxy: /^\d+$/.test(process.env.TRUST_PROXY || '') ? Number(process.env.TRUST_PROXY) : bool(process.env.TRUST_PROXY) ? 1 : 0,
   requireVerifiedEmailForBooking: bool(process.env.REQUIRE_EMAIL_VERIFICATION_FOR_BOOKING, true),
   brevo: {
     apiKey: process.env.BREVO_API_KEY || '',

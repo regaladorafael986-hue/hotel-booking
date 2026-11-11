@@ -18,7 +18,7 @@ const FRONTEND_DIR = path.join(__dirname, '..', '..', 'frontend');
 function createApp() {
   const app = express();
   app.disable('x-powered-by');
-  if (env.trustProxy) app.set('trust proxy', 1);
+  if (env.trustProxy) app.set('trust proxy', env.trustProxy);
 
   app.use(helmet({
     contentSecurityPolicy: {
