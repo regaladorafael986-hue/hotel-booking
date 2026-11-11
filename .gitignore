@@ -10,3 +10,5 @@ coverage/
 backend/storage/backups/
 frontend/dist/
 .vercel
+.env.*
+!.env.example
