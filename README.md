@@ -6,8 +6,8 @@ StayEase is a web-based booking and operations platform for **one hotel**. Guest
 |---|---|
 | Frontend | HTML5, CSS3 (custom design system), vanilla JavaScript ES modules, Fetch API, Chart.js |
 | Backend | Node.js 20+ (tested on 26), Express 5, REST API at `/api/v1` |
-| Database | MySQL / MariaDB via Prisma ORM (migrations in `backend/prisma/migrations`) |
-| Security | bcrypt, server-side sessions in MySQL, CSRF tokens, RBAC + staff permissions, Helmet CSP, rate limiting, zod validation |
+| Database | PostgreSQL (Neon in production) via Prisma ORM (migrations in `backend/prisma/migrations`; the original MySQL ones are archived in `migrations-mysql`) |
+| Security | bcrypt, server-side sessions in PostgreSQL, CSRF tokens, RBAC + staff permissions, Helmet CSP, rate limiting, zod validation |
 | Services | Brevo (email), Cloudinary (images), PayMongo (payments), pdfkit/exceljs (exports) |
 
 > **Status of third-party integrations.** Brevo, Cloudinary and PayMongo are implemented against their REST APIs but are **not live until you add credentials**. Without them the app runs fully in development mode: emails print to the server console (and are saved to `backend/storage/outbox/`), images are stored on local disk, and payments use a built-in **simulated provider** that signs its webhooks exactly like a real one. The simulator is refused when `NODE_ENV=production`.
@@ -33,11 +33,11 @@ Active means pending-confirmation, confirmed, checked-in, or awaiting payment wi
 
 ---
 
-## Quick start (local, Windows + XAMPP)
+## Quick start (local)
 
-**Prerequisites:** Node.js 20+ and XAMPP (only its **MySQL/MariaDB** is used; no PHP).
+**Prerequisites:** Node.js 20+ and PostgreSQL 15+ running on this machine.
 
-1. **Start MySQL** in the XAMPP Control Panel (default `root` with no password on port 3306).
+1. **Start PostgreSQL** and note its user and password (the examples use `postgres` / `postgres` on port 5432).
 2. **Install dependencies**
    ```bash
    cd backend
@@ -48,18 +48,18 @@ Active means pending-confirmation, confirmed, checked-in, or awaiting payment wi
    ```bash
    cp .env.example .env
    ```
-   Set `SESSION_SECRET` to a long random string. The default `DATABASE_URL` points at `mysql://root:@localhost:3306/stayease_db`.
+   Set `SESSION_SECRET` to a long random string. `DATABASE_URL` and `DATABASE_URL_UNPOOLED` default to `postgresql://postgres:postgres@localhost:5432/stayease_db`.
 4. **Create the database and tables**
    ```bash
    npm run db:migrate             # creates stayease_db if missing and applies all migrations
    npm run db:seed                # demo hotel, rooms, accounts and ~4 months of history
    ```
-   (`db:migrate` may also run the seed automatically on first run; running it again is safe because it resets to the demo data.)
+   (`db:migrate` may also run the seed automatically on first run; running it again resets the local database to the demo data. Both commands refuse to run against a database that is not on this machine.)
 5. **Run**
    ```bash
    npm run dev                    # http://localhost:4000 (auto-restarts on changes)
    ```
-   Express serves both the API (`/api/v1`) and the frontend from the same origin.
+   Express serves both the API (`/api/v1`) and the frontend from the same origin. In production, Vercel serves the pages and runs the same API as a serverless function (see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 
 ### Demo accounts (seed data)
 | Role | Email | Password |
@@ -84,7 +84,7 @@ All settings live in `backend/.env` (see `backend/.env.example`). Secrets never 
 
 | Variable | Purpose |
 |---|---|
-| `DATABASE_URL` | MySQL connection string |
+| `DATABASE_URL`, `DATABASE_URL_UNPOOLED` | PostgreSQL connection strings: pooled (app) and direct (migrations). Set by the Neon integration on Vercel |
 | `SESSION_SECRET` | Signs session cookies (required in production) |
 | `APP_URL` | Public base URL used in emails and payment redirects |
 | `HOTEL_TIMEZONE` | Determines "today" for arrivals, reports and holds (default `Asia/Manila`) |
@@ -122,10 +122,12 @@ How accounts are matched:
 |---|---|
 | `npm run dev` / `npm start` | Start the server (watch mode / plain) |
 | `npm run db:migrate` | Create and apply a new migration in development |
-| `npm run db:deploy` | Apply migrations (production) |
-| `npm run db:seed` | Reset all data to the demo dataset (**refused in production**) |
-| `npm run db:backup` | Gzipped `mysqldump` to `storage/backups` with retention |
-| `npm test` | API and integration tests against a separate `stayease_test` database |
+| `npm run db:deploy` | Apply pending migrations (production; never resets data) |
+| `npm run db:status` | Show which migrations have been applied |
+| `npm run db:seed:prod` | Load the demo data only if the database is empty (`SEED_DEMO_DATA=true`) |
+| `npm run db:seed` | Reset all data to the demo dataset (local databases only; refused on a remote database that has data) |
+| `npm run db:backup` | Gzipped `pg_dump` to `storage/backups` with retention (read-only) |
+| `npm test` | API and integration tests against a separate local `stayease_test` database |
 
 ## Project structure
 ```
@@ -154,4 +156,4 @@ docs/                     API reference, testing and deployment guides
 ## Further documentation
 - [docs/API.md](docs/API.md): REST API reference
 - [docs/TESTING.md](docs/TESTING.md): automated tests, manual QA checklist and results
-- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md): free online demo (Render + Aiven), production deployment, HTTPS and backups
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md): Vercel + Neon deployment, environment variables, scheduled jobs, domain and backups

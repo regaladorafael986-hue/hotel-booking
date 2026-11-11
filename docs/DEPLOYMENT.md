@@ -1,102 +1,74 @@
 # Deployment guide
 
-StayEase is a single Node.js process that serves the API and the static frontend from one origin. Any host that runs Node 20+ and can reach MySQL 8 / MariaDB 10.4+ will work, such as a VPS (Ubuntu + Nginx), Render, Railway or Fly.io.
+StayEase runs on **Vercel** (pages + API) with a **Neon PostgreSQL** database, both on one domain.
+
+- The existing pages in `frontend/` are served by Vercel's CDN.
+- The existing Express API (`backend/src/app.js`) runs as one Vercel Function, `frontend/api/index.js`. `frontend/vercel.json` sends every `/api/*` request to it, so all API paths stay the same and no CORS is needed.
+- The Vercel project's **Root Directory is `frontend`**. The build installs `backend/` and copies the pages into `frontend/dist`.
 
 > GitHub Pages cannot host StayEase: it serves static files only, so the API, logins and bookings would not work.
 
-## Free online demo (Render + Aiven MySQL)
-A free, publicly reachable demo with simulated payments. Both services have free plans with no card required at the time of writing.
+## 1. Database (Neon)
+Connect the Neon database to the Vercel project (Vercel → **Storage** → the Neon database → **Connect Project**). The integration sets:
+- `DATABASE_URL`: pooled connection (`-pooler` host), used by the app at runtime
+- `DATABASE_URL_UNPOOLED`: direct connection, used only by `prisma migrate`
 
-1. **Database (Aiven):** sign up at aiven.io → *Create service* → **MySQL** → **Free plan** → pick a region near Singapore. When it is running, copy the **Service URI** (`mysql://avnadmin:…@….aivencloud.com:12345/defaultdb?ssl-mode=REQUIRED`). For Prisma, replace `?ssl-mode=REQUIRED` with `?sslaccept=accept_invalid_certs`.
-2. **Web app (Render):** sign up at render.com with GitHub → *New* → **Blueprint** → choose this repository. Render reads `render.yaml` and asks for:
-   - `DATABASE_URL`: the Aiven URI from step 1
-   - `APP_URL`: `https://stayease.onrender.com` (or whatever name Render gives the service; update it after the first deploy if it differs)
-   - `SEED_ADMIN_PASSWORD`, `SEED_STAFF_PASSWORD`: private passwords (10+ characters) for `admin@stayease.test` and `frontdesk@stayease.test`. The README passwords do **not** work online.
-3. Click **Apply**. The first start applies migrations and loads the demo hotel, rooms and history. Later restarts never wipe data. The demo guest login stays `guest@stayease.test` / `Guest@12345`.
+Turn on **database branches for Preview deployments** if offered, so preview deployments never write to production data.
 
-Limits of the free demo:
-- The free Render service sleeps after ~15 minutes without visitors; the next visit takes up to a minute to wake it.
-- Payments use the simulator (`ALLOW_MOCK_PAYMENTS=true`); no real money moves. For real payments set `PAYMENT_PROVIDER=paymongo` with keys and remove `ALLOW_MOCK_PAYMENTS`.
-- Emails are only written to the Render logs until `BREVO_API_KEY` is set (Brevo's free plan is enough), so the demo sets `REQUIRE_EMAIL_VERIFICATION_FOR_BOOKING=false`.
-- Uploaded images are lost when the service restarts unless Cloudinary keys are set (free plan available). The demo rooms use hosted images, so they are unaffected.
+### Migrations (never reset)
+`npm run db:deploy` (`prisma migrate deploy`) only applies migrations that have not run yet. It never drops, resets or truncates. Run it from `backend/` with the Neon URLs in `backend/.env`, or set `MIGRATE_ON_BUILD=true` for the **Production** environment only, so each production build applies pending migrations. Preview builds never migrate.
 
-## 1. Production database
-1. Create a managed MySQL database (or install MySQL on the server) and a dedicated user:
-   ```sql
-   CREATE DATABASE stayease_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   CREATE USER 'stayease'@'%' IDENTIFIED BY '<strong password>';
-   GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX, DROP, REFERENCES, LOCK TABLES ON stayease_db.* TO 'stayease'@'%';
-   ```
-2. Set `DATABASE_URL=mysql://stayease:<password>@<host>:3306/stayease_db` (add `?sslaccept=strict` if your provider requires TLS).
-3. Apply migrations with `npm run db:deploy`. **Do not run the seed in production**; the script refuses when `NODE_ENV=production`.
-4. Create the first administrator from the server shell:
-   ```bash
-   node -e "const b=require('bcryptjs'),p=require('./src/config/prisma');b.hash(process.argv[1],12).then(h=>p.user.create({data:{firstName:'Admin',lastName:'User',email:process.argv[2],passwordHash:h,role:'ADMIN',emailVerifiedAt:new Date()}})).then(()=>process.exit())" '<password>' admin@yourhotel.com
-   ```
-   Then sign in, open **Hotel settings** to enter the hotel profile, and create room categories and rooms.
+Check first with `npm run db:status`. If the database already contains the StayEase tables from before migrations were tracked, mark the baseline as applied instead of running it: `npx prisma migrate resolve --applied 0_init`.
 
-## 2. Environment (`backend/.env`)
-```
-NODE_ENV=production
-PORT=4000
-APP_URL=https://www.yourhotel.com
-TRUST_PROXY=true
-SESSION_SECRET=<64+ random characters>
-DATABASE_URL=mysql://…
-HOTEL_TIMEZONE=Asia/Manila
-BREVO_API_KEY=…            MAIL_FROM_EMAIL=reservations@yourhotel.com   MAIL_FROM_NAME=Your Hotel
-CLOUDINARY_CLOUD_NAME=…    CLOUDINARY_API_KEY=…   CLOUDINARY_API_SECRET=…
-PAYMENT_PROVIDER=paymongo  PAYMONGO_SECRET_KEY=sk_live_…   PAYMONGO_WEBHOOK_SECRET=whsk_…   PAYMONGO_LIVE_MODE=true
-```
-With `NODE_ENV=production`, startup **fails** if `SESSION_SECRET` is missing or `PAYMENT_PROVIDER=mock`. Session cookies become `Secure`, and CSP adds `upgrade-insecure-requests`.
+The destructive commands (`db:reset`, `db:migrate`, `db:seed`, `npm test`) refuse to run against any database that is not on the local machine.
 
-In Brevo, verify the sender domain (SPF/DKIM) so emails reach inboxes.
+### First data
+- **Demo hotel:** `SEED_DEMO_DATA=true SEED_ADMIN_PASSWORD=… SEED_STAFF_PASSWORD=… npm run db:seed:prod` loads the demo data **only if the database is empty**. The passwords must be 10+ characters; the README passwords never work online.
+- **Real hotel:** create the first administrator, then sign in and fill in **Hotel settings**, room categories and rooms:
+  ```bash
+  node -e "const b=require('bcryptjs'),p=require('./src/config/prisma');b.hash(process.argv[1],12).then(h=>p.user.create({data:{firstName:'Admin',lastName:'User',email:process.argv[2],passwordHash:h,role:'ADMIN',emailVerifiedAt:new Date()}})).then(()=>process.exit())" '<password>' admin@yourhotel.com
+  ```
 
-## 3. Run the app (VPS example)
-```bash
-git clone <repo> /srv/stayease && cd /srv/stayease/backend
-npm ci --omit=dev && npx prisma generate && npm run db:deploy
-sudo npm i -g pm2
-pm2 start src/server.js --name stayease && pm2 save && pm2 startup
-```
-With several instances, set `RUN_JOBS=false` on all but one, so holds are expired and reminders sent exactly once.
+## 2. Environment variables (Vercel → Settings → Environment Variables)
+| Variable | Value |
+|---|---|
+| `SESSION_SECRET` | 64+ random characters (required; the API will not start without it) |
+| `CRON_SECRET` | 32+ random characters; enables the scheduled jobs |
+| `APP_URL` | `https://www.yourhotel.com` in Production (previews use their own URL automatically) |
+| `HOTEL_TIMEZONE` | `Asia/Manila` (default) |
+| `PAYMENT_PROVIDER` | `paymongo` with `PAYMONGO_SECRET_KEY`, `PAYMONGO_WEBHOOK_SECRET`, `PAYMONGO_LIVE_MODE=true`; or, for a demo only, `mock` with `ALLOW_MOCK_PAYMENTS=true` and a random `MOCK_WEBHOOK_SECRET` |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Required for image uploads on Vercel (its disk is read-only) |
+| `BREVO_API_KEY`, `MAIL_FROM_EMAIL`, `MAIL_FROM_NAME` | Email delivery. Without it emails are only logged, so set `REQUIRE_EMAIL_VERIFICATION_FOR_BOOKING=false` or guests cannot book |
+| `GOOGLE_CLIENT_ID/SECRET`, `FACEBOOK_APP_ID/SECRET` | Optional social sign-in; redirect URI `{APP_URL}/api/v1/auth/oauth/<provider>/callback` |
 
-## 4. HTTPS and the domain (Nginx + Let's Encrypt)
-```nginx
-server {
-  server_name www.yourhotel.com;
-  client_max_body_size 12m;            # image uploads (5 MB × several)
-  location / {
-    proxy_pass http://127.0.0.1:4000;
-    proxy_set_header Host $host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-  }
-}
-```
-```bash
-sudo certbot --nginx -d www.yourhotel.com
-```
-Point the domain's DNS A record at the server, and keep `TRUST_PROXY=true` so secure cookies and the rate limiter see real client IPs.
+`TRUST_PROXY` defaults to 1 hop on Vercel, which makes secure cookies and client IPs work. Vercel sets `NODE_ENV=production`, so cookies are `Secure` and the security checks in `backend/src/config/env.js` apply.
+
+## 3. Scheduled jobs
+Vercel has no always-running process, so:
+- **Vercel Cron** calls `GET /api/cron/daily` once a day (01:00 UTC = 09:00 Manila; see `crons` in `frontend/vercel.json`) with `Authorization: Bearer <CRON_SECRET>`. It expires lapsed holds, sends next-day check-in reminders and deletes expired sessions and rate-limit rows. Cron runs on Production deployments only.
+- **Unpaid holds** also expire on demand: at most once a minute per instance, an API request runs the expiry first. Availability never depends on this, because lapsed holds stop blocking rooms the moment they expire.
+- Individual jobs: `/api/cron/expire-holds`, `/api/cron/check-in-reminders`, `/api/cron/cleanup`. On the Pro plan you can add a more frequent `expire-holds` cron.
+
+The local server (`npm start`) still runs these jobs on timers.
+
+## 4. Domain (Cloudflare DNS)
+Vercel → project → **Settings → Domains** → add the domain, then in Cloudflare DNS create the record Vercel shows (CNAME to `cname.vercel-dns.com`, flattened at the apex). Set the record to **DNS only** (grey cloud): Vercel issues the certificate and terminates HTTPS. Then set `APP_URL` to the domain.
 
 ## 5. Payment webhooks
-In the PayMongo dashboard, register `https://www.yourhotel.com/api/v1/payments/webhook` for `checkout_session.payment.paid`, `payment.failed` and `payment.refund.updated`. Copy its secret into `PAYMONGO_WEBHOOK_SECRET`. Webhook events are verified, de-duplicated and logged in `payment_events`.
+In the PayMongo dashboard, register `https://www.yourhotel.com/api/v1/payments/webhook` for `checkout_session.payment.paid`, `payment.failed` and `payment.refund.updated`, and copy its secret into `PAYMONGO_WEBHOOK_SECRET`. Events are signature-verified on the raw body, de-duplicated and logged in `payment_events`. Preview deployments are behind Vercel login, so providers can only reach Production.
 
 ## 6. Backups
-`npm run db:backup` writes `storage/backups/stayease_db-<timestamp>.sql.gz` and keeps the newest `BACKUP_RETENTION` (default 14). Schedule it daily and copy the files off the server:
-```cron
-15 2 * * * cd /srv/stayease/backend && /usr/bin/npm run db:backup >> /var/log/stayease-backup.log 2>&1
-```
-To restore: `gunzip -c stayease_db-YYYYMMDD-HHMMSS.sql.gz | mysql -u stayease -p stayease_db`. Test a restore regularly, and also enable your database provider's point-in-time backups if available.
-
-If images use local storage (no Cloudinary), also back up `backend/storage/uploads/`.
+Neon keeps point-in-time restore history. For an extra offline copy, run `npm run db:backup` from a machine with `pg_dump` installed; it reads `DATABASE_URL_UNPOOLED` and never changes the database. Restore only into an empty database: `gunzip -c file.sql.gz | psql "<url>"`.
 
 ## 7. Release checklist
-- [ ] `npm test` passes against a staging database
-- [ ] `NODE_ENV=production` and all secrets set; `.env` is not committed (see `.gitignore`)
-- [ ] HTTPS active; HTTP redirects to HTTPS
+- [ ] `npm test` passes (local PostgreSQL)
+- [ ] Preview deployment checked: login, booking, checkout and webhook, admin and front-desk pages
+- [ ] `SESSION_SECRET`, `CRON_SECRET` and `APP_URL` set for Production
 - [ ] PayMongo live keys and webhook secret set; one real low-value payment and refund verified
 - [ ] Brevo sender verified; test email received
-- [ ] Admin password changed from any temporary value; demo accounts absent
-- [ ] Daily backup job running; a restore tested
-- [ ] Monitoring and uptime checks on `GET /api/health`
+- [ ] Cloudinary keys set; an image upload works
+- [ ] Admin password changed from any temporary value
+- [ ] Monitoring on `GET /api/health`
+
+## Other hosts
+The same app runs on any Node 20+ host with PostgreSQL: `cd backend && npm ci && npm run db:deploy && npm start` (serves the pages and the API on one port, with timers for the jobs). Behind a reverse proxy set `TRUST_PROXY=true`. The MySQL version of StayEase is tagged `mysql-final` in Git.

@@ -7,9 +7,9 @@ cd backend
 npm test
 ```
 
-The suite uses Node's built-in test runner and supertest against the real Express app and a **separate MySQL database, `stayease_test`**. It is created and migrated automatically; override it with `TEST_DATABASE_URL`. The suite never touches `stayease_db`.
+The suite uses Node's built-in test runner and supertest against the real Express app and a **separate local PostgreSQL database, `stayease_test`**. It is migrated automatically; override it with `TEST_DATABASE_URL`. Every run deletes all rows, so the suite refuses any database that is not on this machine (it can never reach Neon), and it never touches `stayease_db`.
 
-**Last run: 28 tests, 28 passed, 0 failed** (`api.test.js` 18, `oauth.test.js` 10).
+**Last run: 39 tests, 39 passed, 0 failed** (`api.test.js` 18, `oauth.test.js` 10, `postgres.test.js` 5, `serverless.test.js` 6), with the database time zone set to UTC, Asia/Manila and America/Los_Angeles.
 
 | Area | What is verified |
 |---|---|
@@ -17,6 +17,8 @@ The suite uses Node's built-in test runner and supertest against the real Expres
 | Roles | Customer blocked from `/admin` and `/staff`; receptionist blocked from `/admin`; per-permission receptionist checks; anonymous users blocked from bookings |
 | Booking engine | Pay-at-hotel booking confirmed; **client-sent totals ignored** and recomputed server-side; availability decreases; back-to-back stays (check-in on the previous guest's check-out day) don't conflict |
 | Concurrency | **8 simultaneous requests for 2 rooms → exactly 2 bookings, 6 × 409, two distinct physical rooms** |
+| PostgreSQL | Raw availability SQL returns correct columns; hold expiry and back-to-back stays are correct whatever the database time zone; revenue grouped by Manila day; case-insensitive search; duplicate values reported as 409 with the field name |
+| Vercel mode | App loaded through `frontend/api/index.js`: API routes work; pages are left to the CDN; holds expire on demand; `/api/cron/:job` requires `CRON_SECRET` and runs the daily jobs without creating sessions; uploads need Cloudinary; rate-limit counters are shared through the database |
 | Atomicity | A 3-room request with 2 free rooms fails with nothing reserved; a 2-room booking spreads guests across rooms |
 | Validation | Past dates, check-out before check-in, over-capacity, unverified email |
 | Privacy | Customer B gets 404 for customer A's booking |
