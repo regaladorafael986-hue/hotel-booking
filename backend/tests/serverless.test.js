@@ -2,6 +2,7 @@
 // disk, CDN serves the pages). Covers the cron endpoint, on-demand hold expiry, the shared rate-limit
 // store, and serverless-only behaviour (uploads need Cloudinary, non-API paths are not served here).
 process.env.VERCEL = '1';
+process.env.DATABASE_SCHEMA = process.env.DATABASE_SCHEMA || 'public'; // required on Vercel (startup guard)
 process.env.CRON_SECRET = 'test-cron-secret-0123456789';
 const { test, before, after, describe } = require('node:test');
 const assert = require('node:assert/strict');

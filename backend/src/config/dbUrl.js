@@ -8,7 +8,17 @@
 const NAME = /^[a-z_][a-z0-9_]{0,62}$/;
 const DEFAULT_CONNECT_TIMEOUT_S = '15'; // Prisma's default is 5s; a suspended Neon compute can take longer to wake
 
+const schemaSet = () => Boolean((process.env.DATABASE_SCHEMA || '').trim());
+
+// Startup guard: on Vercel the Neon database also holds another app's tables in "public", some with the same
+// names as StayEase's. Never fall back to "public" there; refuse to start until DATABASE_SCHEMA is set.
+// This module is loaded by src/config/prisma.js (and scripts/prisma.js), so the API fails before any query.
+if (process.env.VERCEL && !schemaSet()) {
+  throw new Error('DATABASE_SCHEMA must be set on Vercel (e.g. "stayease"). Refusing to start: without it StayEase would use the "public" schema, which holds other data.');
+}
+
 function dbSchema() {
+  if (process.env.VERCEL && !schemaSet()) throw new Error('DATABASE_SCHEMA must be set on Vercel; refusing to fall back to "public".');
   const s = process.env.DATABASE_SCHEMA || 'public';
   if (!NAME.test(s)) throw new Error(`DATABASE_SCHEMA "${s}" is not a valid schema name (lowercase letters, digits, underscores).`);
   return s;
