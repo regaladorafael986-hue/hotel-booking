@@ -1,6 +1,6 @@
 // StayEase — single-hotel booking & reservation management
 // Database: PostgreSQL (Neon). Monetary values use NUMERIC(12,2).
-// The original MySQL migrations are archived in prisma/migrations-mysql (history only, never applied).
+// The original MySQL version of StayEase is tagged `mysql-final` in Git; it is not used or supported here.
 
 generator client {
   provider = "prisma-client-js"
@@ -116,14 +116,14 @@ model User {
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
 
-  bookings        Booking[]      @relation("BookingCustomer")
-  createdBookings Booking[]      @relation("BookingCreatedBy")
-  reviews         Review[]
-  notifications   Notification[]
-  auditLogs       AuditLog[]
-  tokens          AuthToken[]
-  oauthAccounts   OAuthAccount[]
-  paymentsRecorded Payment[]     @relation("PaymentRecordedBy")
+  bookings         Booking[]      @relation("BookingCustomer")
+  createdBookings  Booking[]      @relation("BookingCreatedBy")
+  reviews          Review[]
+  notifications    Notification[]
+  auditLogs        AuditLog[]
+  tokens           AuthToken[]
+  oauthAccounts    OAuthAccount[]
+  paymentsRecorded Payment[]      @relation("PaymentRecordedBy")
 
   @@index([role])
   @@index([accountStatus])
@@ -298,45 +298,45 @@ model RoomTypeAmenity {
 // ───────────────────────────── Bookings ─────────────────────────────
 
 model Booking {
-  id                    Int                  @id @default(autoincrement())
-  bookingReference      String               @unique @map("booking_reference") @db.VarChar(20)
-  userId                Int?                 @map("user_id") // null for walk-in guests without an account
-  createdById           Int?                 @map("created_by_id")
-  source                BookingSource        @default(ONLINE)
-  guestFirstName        String               @map("guest_first_name") @db.VarChar(80)
-  guestLastName         String               @map("guest_last_name") @db.VarChar(80)
-  guestEmail            String               @map("guest_email") @db.VarChar(191)
-  guestPhone            String?              @map("guest_phone") @db.VarChar(30)
-  specialRequests       String?              @map("special_requests") @db.Text
-  checkIn               DateTime             @map("check_in") @db.Date
-  checkOut              DateTime             @map("check_out") @db.Date
-  nights                Int
-  adults                Int
-  children              Int                  @default(0)
-  totalRooms            Int                  @map("total_rooms")
-  subtotal              Decimal              @db.Decimal(12, 2)
-  discount              Decimal              @default(0) @db.Decimal(12, 2)
-  taxes                 Decimal              @default(0) @db.Decimal(12, 2)
-  totalAmount           Decimal              @map("total_amount") @db.Decimal(12, 2)
-  amountPaid            Decimal              @default(0) @map("amount_paid") @db.Decimal(12, 2)
-  amountRefunded        Decimal              @default(0) @map("amount_refunded") @db.Decimal(12, 2)
-  couponId              Int?                 @map("coupon_id")
-  couponCode            String?              @map("coupon_code") @db.VarChar(40)
-  bookingStatus         BookingStatus        @map("booking_status")
-  paymentStatus         PaymentStatus        @default(PENDING) @map("payment_status")
-  paymentMethod         BookingPaymentMethod @map("payment_method")
-  expiresAt             DateTime?            @map("expires_at")
-  confirmedAt           DateTime?            @map("confirmed_at")
-  checkedInAt           DateTime?            @map("checked_in_at")
-  checkedOutAt          DateTime?            @map("checked_out_at")
-  cancelledAt           DateTime?            @map("cancelled_at")
-  cancellationStatus    CancellationStatus   @default(NONE) @map("cancellation_status")
-  cancellationReason    String?              @map("cancellation_reason") @db.Text
-  cancellationRequestedAt DateTime?          @map("cancellation_requested_at")
-  cancellationNote      String?              @map("cancellation_note") @db.Text
-  reminderSentAt        DateTime?            @map("reminder_sent_at")
-  createdAt             DateTime             @default(now()) @map("created_at")
-  updatedAt             DateTime             @updatedAt @map("updated_at")
+  id                      Int                  @id @default(autoincrement())
+  bookingReference        String               @unique @map("booking_reference") @db.VarChar(20)
+  userId                  Int?                 @map("user_id") // null for walk-in guests without an account
+  createdById             Int?                 @map("created_by_id")
+  source                  BookingSource        @default(ONLINE)
+  guestFirstName          String               @map("guest_first_name") @db.VarChar(80)
+  guestLastName           String               @map("guest_last_name") @db.VarChar(80)
+  guestEmail              String               @map("guest_email") @db.VarChar(191)
+  guestPhone              String?              @map("guest_phone") @db.VarChar(30)
+  specialRequests         String?              @map("special_requests") @db.Text
+  checkIn                 DateTime             @map("check_in") @db.Date
+  checkOut                DateTime             @map("check_out") @db.Date
+  nights                  Int
+  adults                  Int
+  children                Int                  @default(0)
+  totalRooms              Int                  @map("total_rooms")
+  subtotal                Decimal              @db.Decimal(12, 2)
+  discount                Decimal              @default(0) @db.Decimal(12, 2)
+  taxes                   Decimal              @default(0) @db.Decimal(12, 2)
+  totalAmount             Decimal              @map("total_amount") @db.Decimal(12, 2)
+  amountPaid              Decimal              @default(0) @map("amount_paid") @db.Decimal(12, 2)
+  amountRefunded          Decimal              @default(0) @map("amount_refunded") @db.Decimal(12, 2)
+  couponId                Int?                 @map("coupon_id")
+  couponCode              String?              @map("coupon_code") @db.VarChar(40)
+  bookingStatus           BookingStatus        @map("booking_status")
+  paymentStatus           PaymentStatus        @default(PENDING) @map("payment_status")
+  paymentMethod           BookingPaymentMethod @map("payment_method")
+  expiresAt               DateTime?            @map("expires_at")
+  confirmedAt             DateTime?            @map("confirmed_at")
+  checkedInAt             DateTime?            @map("checked_in_at")
+  checkedOutAt            DateTime?            @map("checked_out_at")
+  cancelledAt             DateTime?            @map("cancelled_at")
+  cancellationStatus      CancellationStatus   @default(NONE) @map("cancellation_status")
+  cancellationReason      String?              @map("cancellation_reason") @db.Text
+  cancellationRequestedAt DateTime?            @map("cancellation_requested_at")
+  cancellationNote        String?              @map("cancellation_note") @db.Text
+  reminderSentAt          DateTime?            @map("reminder_sent_at")
+  createdAt               DateTime             @default(now()) @map("created_at")
+  updatedAt               DateTime             @updatedAt @map("updated_at")
 
   user          User?          @relation("BookingCustomer", fields: [userId], references: [id])
   createdBy     User?          @relation("BookingCreatedBy", fields: [createdById], references: [id])
@@ -378,23 +378,23 @@ model BookingRoom {
 // ───────────────────────────── Payments ─────────────────────────────
 
 model Payment {
-  id               Int           @id @default(autoincrement())
-  bookingId        Int           @map("booking_id")
-  paymentReference String        @unique @map("payment_reference") @db.VarChar(40)
-  provider         String        @db.VarChar(30) // PAYMONGO | MOCK | FRONT_DESK
-  providerSessionId String?      @unique @map("provider_session_id") @db.VarChar(120)
-  providerPaymentId String?      @map("provider_payment_id") @db.VarChar(120)
-  checkoutUrl      String?       @map("checkout_url") @db.VarChar(500)
-  amount           Decimal       @db.Decimal(12, 2)
-  amountRefunded   Decimal       @default(0) @map("amount_refunded") @db.Decimal(12, 2)
-  paymentMethod    String?       @map("payment_method") @db.VarChar(30) // GCASH | MAYA | CARD | CASH | ...
-  paymentStatus    PaymentStatus @default(PENDING) @map("payment_status")
-  failureReason    String?       @map("failure_reason") @db.VarChar(255)
-  recordedById     Int?          @map("recorded_by_id")
-  notes            String?       @db.VarChar(255)
-  paidAt           DateTime?     @map("paid_at")
-  createdAt        DateTime      @default(now()) @map("created_at")
-  updatedAt        DateTime      @updatedAt @map("updated_at")
+  id                Int           @id @default(autoincrement())
+  bookingId         Int           @map("booking_id")
+  paymentReference  String        @unique @map("payment_reference") @db.VarChar(40)
+  provider          String        @db.VarChar(30) // PAYMONGO | MOCK | FRONT_DESK
+  providerSessionId String?       @unique @map("provider_session_id") @db.VarChar(120)
+  providerPaymentId String?       @map("provider_payment_id") @db.VarChar(120)
+  checkoutUrl       String?       @map("checkout_url") @db.VarChar(500)
+  amount            Decimal       @db.Decimal(12, 2)
+  amountRefunded    Decimal       @default(0) @map("amount_refunded") @db.Decimal(12, 2)
+  paymentMethod     String?       @map("payment_method") @db.VarChar(30) // GCASH | MAYA | CARD | CASH | ...
+  paymentStatus     PaymentStatus @default(PENDING) @map("payment_status")
+  failureReason     String?       @map("failure_reason") @db.VarChar(255)
+  recordedById      Int?          @map("recorded_by_id")
+  notes             String?       @db.VarChar(255)
+  paidAt            DateTime?     @map("paid_at")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
 
   booking    Booking  @relation(fields: [bookingId], references: [id])
   recordedBy User?    @relation("PaymentRecordedBy", fields: [recordedById], references: [id])
