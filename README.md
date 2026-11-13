@@ -6,7 +6,7 @@ StayEase is a web-based booking and operations platform for **one hotel**. Guest
 |---|---|
 | Frontend | HTML5, CSS3 (custom design system), vanilla JavaScript ES modules, Fetch API, Chart.js |
 | Backend | Node.js 20+ (tested on 26), Express 5, REST API at `/api/v1` |
-| Database | PostgreSQL (Neon in production) via Prisma ORM (migrations in `backend/prisma/migrations`; the original MySQL ones are archived in `migrations-mysql`) |
+| Database | PostgreSQL (Neon in production) via Prisma ORM (migrations in `backend/prisma/migrations`; the old MySQL version is tagged `mysql-final` in Git) |
 | Security | bcrypt, server-side sessions in PostgreSQL, CSRF tokens, RBAC + staff permissions, Helmet CSP, rate limiting, zod validation |
 | Services | Brevo (email), Cloudinary (images), PayMongo (payments), pdfkit/exceljs (exports) |
 
